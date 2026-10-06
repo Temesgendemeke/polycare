@@ -15,10 +15,10 @@ const translations: Record<Language, any> = {
   gz,
 };
 
-export const getTranslation = (language: Language, key: string): string => {
+export const getTranslation = (language: Language, key: string, params?: Record<string, string | number>): string => {
   const keys = key.split('.');
   let value: any = translations[language];
-  
+
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
@@ -35,13 +35,17 @@ export const getTranslation = (language: Language, key: string): string => {
       break;
     }
   }
-  
-  return typeof value === 'string' ? value : key;
+
+  if (typeof value !== 'string') return key;
+  if (!params) return value;
+  return value.replace(/\{(\w+)\}/g, (_, p) =>
+    params[p] !== undefined ? String(params[p]) : `{${p}}`
+  );
 };
 
-export const t = (key: string, language?: Language): string => {
+export const t = (key: string, language?: Language, params?: Record<string, string | number>): string => {
   const currentLanguage = language || 'en';
-  return getTranslation(currentLanguage, key);
+  return getTranslation(currentLanguage, key, params);
 };
 
 export const supportedLanguages: Language[] = ['en', 'am', 'or', 'ti', 'gz'];

@@ -8,7 +8,7 @@ export const useTranslation = () => {
   const language = user?.preferredLanguage || appLanguage || 'en';
 
   return {
-    t: (key: string) => t(key, language),
+    t: (key: string, params?: Record<string, string | number>) => t(key, language, params),
     language,
   };
 };
