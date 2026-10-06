@@ -169,7 +169,22 @@
     "emptyTitle": "No medications added yet",
     "emptyHint": "Tap add medication to build your treatment plan.",
     "deleteTitle": "Delete Medication",
-    "removeConfirm": "Remove {name}?"
+    "removeConfirm": "Remove {name}?",
+    "sampleMeds": "Sample Medications",
+    "taken": "Taken",
+    "scheduled": "Scheduled",
+    "doctorTitle": "Doctor's Prescription",
+    "takeDose": "Take dose",
+    "completed": "Completed",
+    "undo": "Undo",
+    "todayAdherence": "Today's Adherence",
+    "weeklyHistory": "Weekly History",
+    "dailyChecklist": "Daily Dose Checklist",
+    "checklistSubtitle": "Tap circle to mark dose as taken today",
+    "pendingStatus": "Pending",
+    "takenStatus": "Taken",
+    "takeWithFood": "Take with food 🍽️",
+    "allPrescriptions": "All Prescriptions & Inventory"
   },
   "reminders": {
     "title": "Medication Reminders",
@@ -222,7 +237,10 @@
     "wed": "Wed",
     "thu": "Thu",
     "fri": "Fri",
-    "sat": "Sat"
+    "sat": "Sat",
+    "testScheduled": "Test notification scheduled! It will arrive in 2 seconds.",
+    "permissionRequired": "Permission Required",
+    "permissionMsg": "Notification permission was not granted. Please enable notifications in your device settings."
   },
   "exercise": {
     "title": "Exercise Plans",

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
+import { useTranslation } from '../hooks';
 
 interface Interaction {
   medications: string;
@@ -9,21 +10,29 @@ interface Interaction {
   recommendation: string;
 }
 
+const severityKeys = {
+  contraindicated: 'medications.contraindicated',
+  major: 'medications.major',
+  moderate: 'medications.moderate',
+  minor: 'medications.minor',
+} as const;
+
 const severityConfig = {
-  contraindicated: { color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle', label: 'Contraindicated' },
-  major: { color: '#EA580C', bg: '#FFF7ED', icon: 'warning', label: 'Major' },
-  moderate: { color: '#CA8A04', bg: '#FEFCE8', icon: 'alert-circle', label: 'Moderate' },
-  minor: { color: '#16A34A', bg: '#F0FDF4', icon: 'information-circle', label: 'Minor' },
+  contraindicated: { color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle' },
+  major: { color: '#EA580C', bg: '#FFF7ED', icon: 'warning' },
+  moderate: { color: '#CA8A04', bg: '#FEFCE8', icon: 'alert-circle' },
+  minor: { color: '#16A34A', bg: '#F0FDF4', icon: 'information-circle' },
 };
 
 export default function InteractionCard({ interaction }: { interaction: Interaction }) {
+  const { t } = useTranslation();
   const cfg = severityConfig[interaction.severity];
 
   return (
     <View style={[styles.card, { borderLeftColor: cfg.color }]}>
       <View style={[styles.severityBadge, { backgroundColor: cfg.bg }]}>
         <Ionicons name={cfg.icon as any} size={16} color={cfg.color} />
-        <Text style={[styles.severityText, { color: cfg.color }]}>{cfg.label}</Text>
+        <Text style={[styles.severityText, { color: cfg.color }]}>{t(severityKeys[interaction.severity])}</Text>
       </View>
       <Text style={styles.interactionTitle}>{interaction.medications}</Text>
       <Text style={styles.description}>{interaction.description}</Text>

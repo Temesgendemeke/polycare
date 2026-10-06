@@ -3,10 +3,12 @@ import { Stack } from 'expo-router';
 import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { Colors } from '../constants/design';
 import { useUserStore, useMedicationStore, useReminderStore } from '../store';
+import { useTranslation } from '../hooks';
 
 import { NotificationService } from '../services';
 
 export default function RootLayout() {
+  const { t } = useTranslation();
   const loadStoredAuth = useUserStore((s) => s.loadStoredAuth);
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const fetchMedications = useMedicationStore((s) => s.fetchMedications);
@@ -50,7 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="history" options={{ headerShown: false }} />
         <Stack.Screen name="drug-locator" options={{ headerShown: false }} />
         <Stack.Screen name="education" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
+        <Stack.Screen name="+not-found" options={{ title: t('notFound.title') }} />
       </Stack>
     </PaperProvider>
   );

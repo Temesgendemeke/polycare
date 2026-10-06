@@ -7,6 +7,8 @@ import { remindersApi, getAuthToken } from '../lib/api';
 
 interface ReminderState {
   reminders: Reminder[];
+  // True once per-slot reminders have been auto-created for doctor-prescribed meds.
+  prescribedSeeded: boolean;
 
   addReminder: (reminder: Reminder, medicationName?: string) => Promise<void>;
   updateReminder: (id: string, updates: Partial<Reminder>, medicationName?: string) => Promise<void>;
@@ -16,14 +18,21 @@ interface ReminderState {
   snoozeReminder: (id: string, minutes: number) => void;
   getRemindersForDay: (day: number) => Reminder[];
   getActiveReminders: () => Reminder[];
+  ensurePrescribedReminders: (
+    items: { medicationId: string; title: string; time: string; dosage?: string }[]
+  ) => Promise<void>;
   fetchReminders: () => Promise<void>;
   syncNotificationSchedules: () => Promise<void>;
 }
+
+const isSampleReminder = (id: string, medicationId?: string) =>
+  id.startsWith('rx-sample-') || (medicationId ? medicationId.startsWith('sample-') : false);
 
 export const useReminderStore = create<ReminderState>()(
   persist(
     (set, get) => ({
       reminders: [],
+      prescribedSeeded: false,
 
       addReminder: async (reminder, medicationName) => {
         let notificationIds: string[] = [];
@@ -34,12 +43,22 @@ export const useReminderStore = create<ReminderState>()(
         const newReminder = { ...reminder, notificationIds };
         set((state) => ({ reminders: [...state.reminders, newReminder] }));
 
-        try {
-          if (getAuthToken()) {
-            await remindersApi.create(newReminder);
+        if (!isSampleReminder(newReminder.id, newReminder.medicationId)) {
+          try {
+            if (getAuthToken()) {
+              const res = await remindersApi.create(newReminder);
+              const serverId = res?._id || res?.id;
+              if (serverId && serverId !== newReminder.id) {
+                set((state) => ({
+                  reminders: state.reminders.map((r) =>
+                    r.id === newReminder.id ? { ...r, id: serverId } : r
+                  ),
+                }));
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to sync reminder with backend:', e);
           }
-        } catch (e) {
-          console.warn('Failed to sync reminder with backend:', e);
         }
       },
 
@@ -74,12 +93,14 @@ export const useReminderStore = create<ReminderState>()(
           reminders: state.reminders.map((r) => (r.id === id ? updatedReminder : r)),
         }));
 
-        try {
-          if (getAuthToken()) {
-            await remindersApi.update(id, updates);
+        if (!isSampleReminder(id, current.medicationId)) {
+          try {
+            if (getAuthToken()) {
+              await remindersApi.update(id, updates);
+            }
+          } catch (e) {
+            console.warn('Failed to sync reminder update with backend:', e);
           }
-        } catch (e) {
-          console.warn('Failed to sync reminder update with backend:', e);
         }
       },
 
@@ -91,12 +112,14 @@ export const useReminderStore = create<ReminderState>()(
 
         set((state) => ({ reminders: state.reminders.filter((r) => r.id !== id) }));
 
-        try {
-          if (getAuthToken()) {
-            await remindersApi.delete(id);
+        if (!isSampleReminder(id, reminder?.medicationId)) {
+          try {
+            if (getAuthToken()) {
+              await remindersApi.delete(id);
+            }
+          } catch (e) {
+            console.warn('Failed to sync reminder deletion with backend:', e);
           }
-        } catch (e) {
-          console.warn('Failed to sync reminder deletion with backend:', e);
         }
       },
 
@@ -125,12 +148,37 @@ export const useReminderStore = create<ReminderState>()(
         return get().reminders.filter((r) => r.enabled);
       },
 
+      ensurePrescribedReminders: async (items) => {
+        if (get().prescribedSeeded) return;
+        for (const item of items) {
+          const exists = get().reminders.some(
+            (r) => r.medicationId === item.medicationId && r.time === item.time
+          );
+          if (exists) continue;
+          try {
+            await get().addReminder(
+              {
+                id: `rx-${item.medicationId}-${item.time.replace(':', '')}`,
+                medicationId: item.medicationId,
+                title: item.title,
+                time: item.time,
+                days: [0, 1, 2, 3, 4, 5, 6],
+                enabled: true,
+                dosage: item.dosage,
+              },
+              item.title
+            );
+          } catch {}
+        }
+        set({ prescribedSeeded: true });
+      },
+
       fetchReminders: async () => {
         if (!getAuthToken()) return;
         try {
           const data = await remindersApi.getAll();
           const mapped: Reminder[] = data.map((item: any) => ({
-            id: item._id || item.id,
+            id: item.customId || item._id || item.id,
             medicationId: item.medicationId,
             title: item.title,
             time: item.time,
@@ -142,7 +190,14 @@ export const useReminderStore = create<ReminderState>()(
             instructions: item.instructions,
             notificationIds: item.notificationIds || [],
           }));
-          set({ reminders: mapped });
+          const sampleReminders = get().reminders.filter((r) =>
+            isSampleReminder(r.id, r.medicationId)
+          );
+          const combined = [
+            ...mapped,
+            ...sampleReminders.filter((s) => !mapped.some((m) => m.id === s.id)),
+          ];
+          set({ reminders: combined });
           // Ensure enabled reminders are scheduled on this device
           await get().syncNotificationSchedules();
         } catch (e) {

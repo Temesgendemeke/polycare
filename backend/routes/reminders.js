@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Reminder = require('../models/Reminder');
 const { protect } = require('../middleware/auth');
 
@@ -17,7 +18,11 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const reminder = await Reminder.create({ ...req.body, userId: req.user._id });
+    const data = { ...req.body, userId: req.user._id };
+    if (req.body.id && !req.body.customId) {
+      data.customId = req.body.id;
+    }
+    const reminder = await Reminder.create(data);
     res.status(201).json(reminder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -26,8 +31,13 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const filter = isObjectId
+      ? { $or: [{ _id: req.params.id }, { customId: req.params.id }], userId: req.user._id }
+      : { customId: req.params.id, userId: req.user._id };
+
     const reminder = await Reminder.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      filter,
       req.body,
       { new: true }
     );
@@ -40,7 +50,12 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const reminder = await Reminder.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const filter = isObjectId
+      ? { $or: [{ _id: req.params.id }, { customId: req.params.id }], userId: req.user._id }
+      : { customId: req.params.id, userId: req.user._id };
+
+    const reminder = await Reminder.findOneAndDelete(filter);
     if (!reminder) return res.status(404).json({ error: 'Reminder not found' });
     res.json({ message: 'Reminder removed' });
   } catch (error) {

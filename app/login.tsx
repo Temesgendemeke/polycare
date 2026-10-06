@@ -10,7 +10,28 @@ import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants
 export default function LoginScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { login, isLoading, error } = useUserStore();
+  const { login, setUser, isLoading, error } = useUserStore();
+
+  const handleDemo = async () => {
+    await setUser({
+      id: 'demo-user-1',
+      name: 'Tesfaye Abebe',
+      email: 'demo@polycare.com',
+      role: 'user',
+      preferredLanguage: 'en',
+      conditions: ['hypertension', 'diabetes'],
+      createdAt: new Date().toISOString(),
+      settings: {
+        notifications: true,
+        voiceEnabled: true,
+        largeText: false,
+        highContrast: false,
+        reminderSound: 'default',
+        reminderAdvanceMinutes: 15,
+      },
+    });
+    router.replace('/(tabs)');
+  };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -119,15 +140,15 @@ export default function LoginScreen() {
               <View style={styles.divider} />
             </View>
 
-            <TouchableOpacity style={styles.demoButton} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.demoButton} onPress={handleDemo} activeOpacity={0.8}>
               <Ionicons name="play-circle-outline" size={18} color={Colors.primary} />
-              <Text style={styles.demoButtonText}>Try Demo Account</Text>
+              <Text style={styles.demoButtonText}>{t('auth.tryDemo')}</Text>
             </TouchableOpacity>
 
             <View style={styles.signupRow}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
+              <Text style={styles.signupText}>{t('auth.noAccount')}</Text>
               <Link href="/register">
-                <Text style={styles.signupLink}>Create Account</Text>
+                <Text style={styles.signupLink}>{t('auth.createAccount')}</Text>
               </Link>
             </View>
           </View>

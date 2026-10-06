@@ -169,7 +169,22 @@
     "emptyTitle": "እስካሁን ምንም መድኃኒቶች አልተጨመሩም",
     "emptyHint": "የሕክምና እቅድዎን ለመገንባት መድኃኒት አክልን ይንኩ።",
     "deleteTitle": "መድኃኒት ሰርዝ",
-    "removeConfirm": "{name} ማስወገድ?"
+    "removeConfirm": "{name} ማስወገድ?",
+    "sampleMeds": "ናሙና መድኃኒቶች",
+    "taken": "የተወሰደ",
+    "scheduled": "የታቀደ",
+    "doctorTitle": "የሐኪም ማዘዣ",
+    "takeDose": "መጠን ውሰድ",
+    "completed": "ተጠናቋል",
+    "undo": "መልስ",
+    "todayAdherence": "የዛሬው ተገዢነት",
+    "weeklyHistory": "የሳምንቱ ታሪክ",
+    "dailyChecklist": "የዕለቱ የመድኃኒት ዝርዝር",
+    "checklistSubtitle": "የተወሰደበትን ምልክት ለማድረግ ክብ ይንኩ",
+    "pendingStatus": "በመጠባበቅ ላይ",
+    "takenStatus": "የተወሰደ",
+    "takeWithFood": "ከምግብ ጋር ይውሰዱ 🍽️",
+    "allPrescriptions": "ሁሉም ማዘዣዎች እና ክምችት"
   },
   "reminders": {
     "title": "የመዳመጻ ማስታወሻዎች",
@@ -222,7 +237,10 @@
     "wed": "ረቡዕ",
     "thu": "ሐሙስ",
     "fri": "ዓርብ",
-    "sat": "ቅዳሜ"
+    "sat": "ቅዳሜ",
+    "testScheduled": "የሙከራ ማሳወቂያ ተይዟል! በ2 ሰከንድ ውስጥ ይደርሳል።",
+    "permissionRequired": "ፈቃድ ያስፈልጋል",
+    "permissionMsg": "የማሳወቂያ ፈቃድ አልተሰጠም። እባክዎ በመሣሪያ ቅንብሮች ውስጥ ማሳወቂያዎችን ያብሩ።"
   },
   "exercise": {
     "title": "የእንቅስቃሴ እቅዶች",

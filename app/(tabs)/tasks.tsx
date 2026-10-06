@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../hooks';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/design';
 import { useMedicationStore, useReminderStore } from '../../store';
 
@@ -16,7 +17,8 @@ type Task = {
 
 function generateTasks(
   medications: ReturnType<typeof useMedicationStore.getState>['medications'],
-  reminders: ReturnType<typeof useReminderStore.getState>['reminders']
+  reminders: ReturnType<typeof useReminderStore.getState>['reminders'],
+  t: (key: string, params?: Record<string, string | number>) => string
 ): Task[] {
   const tasks: Task[] = [];
 
@@ -24,8 +26,8 @@ function generateTasks(
     if (med.currentStock !== undefined && med.currentStock <= 3) {
       tasks.push({
         id: `stock-${med.id}`,
-        title: `Refill ${med.name} (${med.currentStock} left)`,
-        category: 'Medication',
+        title: t('tasks.refillLeft', { name: med.name, stock: med.currentStock }),
+        category: t('tasks.catMedication'),
         priority: med.currentStock <= 1 ? 'high' : 'medium',
         status: 'pending',
       });
@@ -33,8 +35,8 @@ function generateTasks(
     if (med.refillDate && new Date(med.refillDate) <= new Date(Date.now() + 7 * 86400000)) {
       tasks.push({
         id: `refill-${med.id}`,
-        title: `Refill due for ${med.name}${med.refillDate ? ` (${new Date(med.refillDate).toLocaleDateString()})` : ''}`,
-        category: 'Medication',
+        title: t('tasks.refillDue', { name: med.name, date: med.refillDate ? new Date(med.refillDate).toLocaleDateString() : '' }),
+        category: t('tasks.catMedication'),
         priority: 'medium',
         status: 'pending',
       });
@@ -47,8 +49,8 @@ function generateTasks(
       if (reminder.days.length === 0 || reminder.days.includes(today)) {
         tasks.push({
           id: `reminder-${reminder.id}`,
-          title: `Take ${reminder.title || 'medication'} at ${reminder.time}`,
-          category: 'Health',
+          title: t('tasks.takeAt', { name: reminder.title || t('tasks.medicationFallback'), time: reminder.time }),
+          category: t('tasks.catHealth'),
           priority: 'high',
           status: 'pending',
         });
@@ -60,9 +62,10 @@ function generateTasks(
 }
 
 export default function TasksScreen() {
+  const { t } = useTranslation();
   const { medications } = useMedicationStore();
   const { reminders } = useReminderStore();
-  const [tasks, setTasks] = useState<Task[]>(() => generateTasks(medications, reminders));
+  const [tasks, setTasks] = useState<Task[]>(() => generateTasks(medications, reminders, t));
   const [filter, setFilter] = useState<TaskStatus>('pending');
   const [search, setSearch] = useState('');
 
@@ -83,7 +86,7 @@ export default function TasksScreen() {
   };
 
   const refreshTasks = () => {
-    setTasks(generateTasks(medications, reminders));
+    setTasks(generateTasks(medications, reminders, t));
   };
 
   return (
@@ -91,8 +94,8 @@ export default function TasksScreen() {
       <View style={styles.headerCard}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>Your Tasks</Text>
-            <Text style={styles.subtitle}>Simple daily checklist to stay consistent.</Text>
+            <Text style={styles.title}>{t('tasks.title')}</Text>
+            <Text style={styles.subtitle}>{t('tasks.subtitle')}</Text>
           </View>
           <TouchableOpacity style={styles.refreshButton} onPress={refreshTasks}>
             <Ionicons name="refresh" size={18} color={Colors.primary} />
@@ -104,7 +107,7 @@ export default function TasksScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search tasks..."
+          placeholder={t('tasks.searchPh')}
           placeholderTextColor={Colors.textLight}
           style={styles.searchInput}
         />
@@ -113,13 +116,13 @@ export default function TasksScreen() {
             style={[styles.filterButton, filter === 'pending' && styles.filterButtonActive]}
             onPress={() => setFilter('pending')}
           >
-            <Text style={[styles.filterText, filter === 'pending' && styles.filterTextActive]}>Pending</Text>
+            <Text style={[styles.filterText, filter === 'pending' && styles.filterTextActive]}>{t('common.pending')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.filterButton, filter === 'completed' && styles.filterButtonActive]}
             onPress={() => setFilter('completed')}
           >
-            <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>Completed</Text>
+            <Text style={[styles.filterText, filter === 'completed' && styles.filterTextActive]}>{t('common.completed')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -128,7 +131,7 @@ export default function TasksScreen() {
         {filteredTasks.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="checkmark-done-circle-outline" size={30} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>No tasks found</Text>
+            <Text style={styles.emptyTitle}>{t('tasks.noTasks')}</Text>
           </View>
         ) : (
           filteredTasks.map((task) => (

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useRootNavigationState } from 'expo-router';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,14 +9,16 @@ import { useEffect } from 'react';
 
 export default function Index() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
   const { t } = useTranslation();
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
 
   useEffect(() => {
+    if (!rootNavigationState?.key) return;
     if (isAuthenticated) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, rootNavigationState?.key]);
 
   return (
     <SafeAreaView style={styles.container}>

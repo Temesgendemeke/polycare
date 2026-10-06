@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../hooks';
@@ -85,13 +85,30 @@ export default function ConsultationScreen() {
           <View key={pharmacist.id} style={styles.pharmacistCard}>
             <View style={styles.cardTopRow}>
               <View style={styles.avatarWrap}>
-                <Ionicons name="medkit" size={22} color={Colors.primary} />
+                {pharmacist.avatar ? (
+                  <Image
+                    source={{ uri: pharmacist.avatar }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons
+                    name={pharmacist.gender === 'male' ? 'man' : 'woman'}
+                    size={24}
+                    color={Colors.primary}
+                  />
+                )}
+                <View
+                  style={[
+                    styles.statusDotOverlay,
+                    pharmacist.available ? styles.statusOnline : styles.statusOffline,
+                  ]}
+                />
               </View>
 
               <View style={styles.pharmacistInfo}>
                 <View style={styles.nameStatusRow}>
                   <Text style={styles.pharmacistName}>{pharmacist.name}</Text>
-                  <View style={[styles.statusDot, pharmacist.available ? styles.statusOnline : styles.statusOffline]} />
                 </View>
 
                 <Text style={styles.pharmacistDetails}>
@@ -233,13 +250,29 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   avatarWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: Colors.infoLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
+    position: 'relative',
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  statusDotOverlay: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: Colors.surface,
   },
   pharmacistInfo: {
     flex: 1,

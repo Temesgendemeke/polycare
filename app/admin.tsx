@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { adminApi } from '../lib/api/admin';
 import { useUserStore } from '../store';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
+import { useTranslation } from '../hooks';
 
 interface AdminUser {
   _id: string;
@@ -18,6 +19,7 @@ interface AdminUser {
 
 export default function AdminScreen() {
   const { user } = useUserStore();
+  const { t } = useTranslation();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -46,14 +48,14 @@ export default function AdminScreen() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const handleDelete = (id: string, name: string) => {
-    Alert.alert('Delete User', `Remove ${name}? This also deletes their medications.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    Alert.alert(t('admin.deleteTitle'), t('admin.deleteMsg', { name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
         try {
           await adminApi.deleteUser(id);
           setUsers((prev) => prev.filter((u) => u._id !== id));
-          setTotal((t) => t - 1);
-        } catch (e: any) { Alert.alert('Error', e.message); }
+          setTotal((prev) => prev - 1);
+        } catch (e: any) { Alert.alert(t('common.error'), e.message); }
       }},
     ]);
   };
@@ -63,7 +65,7 @@ export default function AdminScreen() {
     try {
       await adminApi.setRole(id, newRole);
       setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, role: newRole } : u)));
-    } catch (e: any) { Alert.alert('Error', e.message); }
+    } catch (e: any) { Alert.alert(t('common.error'), e.message); }
   };
 
   if (!user || user.role !== 'admin') {
@@ -71,8 +73,8 @@ export default function AdminScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
           <Ionicons name="shield-checkmark-outline" size={48} color={Colors.textLight} />
-          <Text style={styles.deniedTitle}>Admin Access Only</Text>
-          <Text style={styles.deniedSub}>You do not have permission to view this page.</Text>
+          <Text style={styles.deniedTitle}>{t('admin.accessOnly')}</Text>
+          <Text style={styles.deniedSub}>{t('admin.noPermission')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -85,8 +87,8 @@ export default function AdminScreen() {
           <Ionicons name="arrow-back" size={22} color={Colors.text} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Admin Panel</Text>
-          <Text style={styles.headerSub}>User Management</Text>
+          <Text style={styles.headerTitle}>{t('admin.panel')}</Text>
+          <Text style={styles.headerSub}>{t('admin.userMgmt')}</Text>
         </View>
       </View>
 
@@ -94,11 +96,11 @@ export default function AdminScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statNum}>{stats.totalUsers}</Text>
-            <Text style={styles.statLabel}>Users</Text>
+            <Text style={styles.statLabel}>{t('admin.users')}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statNum}>{stats.totalMedications}</Text>
-            <Text style={styles.statLabel}>Medications</Text>
+            <Text style={styles.statLabel}>{t('admin.medications')}</Text>
           </View>
         </View>
       )}
@@ -108,7 +110,7 @@ export default function AdminScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search users..."
+          placeholder={t('admin.searchPh')}
           placeholderTextColor={Colors.textLight}
           style={styles.searchInput}
         />
@@ -119,7 +121,7 @@ export default function AdminScreen() {
         )}
       </View>
 
-      <Text style={styles.countText}>{total} user{total !== 1 ? 's' : ''}</Text>
+      <Text style={styles.countText}>{total} {t('admin.userSuffix')}</Text>
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={Colors.primary} />
@@ -136,12 +138,12 @@ export default function AdminScreen() {
               </View>
               <View style={styles.userInfo}>
                 <Text style={styles.userName}>{item.name}</Text>
-                <Text style={styles.userEmail}>{item.email || item.phone || 'No contact'}</Text>
+                <Text style={styles.userEmail}>{item.email || item.phone || t('admin.noContact')}</Text>
                 <View style={styles.roleRow}>
                   <View style={[styles.roleBadge, item.role === 'admin' && styles.roleBadgeAdmin]}>
                     <Text style={[styles.roleText, item.role === 'admin' && styles.roleTextAdmin]}>{item.role}</Text>
                   </View>
-                  <Text style={styles.joinedText}>Joined {new Date(item.createdAt).toLocaleDateString()}</Text>
+                  <Text style={styles.joinedText}>{t('admin.joined', { date: new Date(item.createdAt).toLocaleDateString() })}</Text>
                 </View>
               </View>
               <View style={styles.userActions}>

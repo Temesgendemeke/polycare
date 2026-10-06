@@ -96,6 +96,8 @@ export class ConsultationService {
         rating: 4.9,
         available: true,
         nextSlot: 'Today, 2:00 PM',
+        gender: 'female',
+        avatar: 'https://images.unsplash.com/photo-1594824813576-92f7a0752763?w=300&auto=format&fit=crop&q=80',
       },
       {
         id: 'pharm-2',
@@ -106,6 +108,8 @@ export class ConsultationService {
         rating: 4.7,
         available: false,
         nextSlot: 'Tomorrow, 10:00 AM',
+        gender: 'female',
+        avatar: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=300&auto=format&fit=crop&q=80',
       },
       {
         id: 'pharm-3',
@@ -116,6 +120,8 @@ export class ConsultationService {
         rating: 5.0,
         available: true,
         nextSlot: 'Today, 4:30 PM',
+        gender: 'female',
+        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&auto=format&fit=crop&q=80',
       },
       {
         id: 'pharm-4',
@@ -126,6 +132,8 @@ export class ConsultationService {
         rating: 5.0,
         available: true,
         nextSlot: 'Today, 4:30 PM',
+        gender: 'female',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80',
       },
       {
         id: 'pharm-5',
@@ -136,6 +144,8 @@ export class ConsultationService {
         rating: 5.0,
         available: true,
         nextSlot: 'Today, 4:30 PM',
+        gender: 'female',
+        avatar: 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?w=300&auto=format&fit=crop&q=80',
       },
     ];
   }

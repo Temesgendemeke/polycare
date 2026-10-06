@@ -20,6 +20,7 @@ interface Meal {
 }
 
 export default function DietScreen() {
+  const { t } = useTranslation();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -49,11 +50,11 @@ export default function DietScreen() {
   const dateStr = (d: string) => {
     const date = new Date(d + 'T12:00:00');
     const todayD = new Date();
-    if (d === today) return 'Today';
+    if (d === today) return t('common.today');
     const yesterday = new Date(todayD); yesterday.setDate(yesterday.getDate() - 1);
-    if (d === yesterday.toISOString().split('T')[0]) return 'Yesterday';
+    if (d === yesterday.toISOString().split('T')[0]) return t('common.yesterday');
     const tomorrow = new Date(todayD); tomorrow.setDate(tomorrow.getDate() + 1);
-    if (d === tomorrow.toISOString().split('T')[0]) return 'Tomorrow';
+    if (d === tomorrow.toISOString().split('T')[0]) return t('common.tomorrow');
     return date.toLocaleDateString();
   };
 
@@ -68,9 +69,9 @@ export default function DietScreen() {
   };
 
   const handleDelete = (id: string, name: string) => {
-    Alert.alert('Delete Meal', `Remove ${name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
+    Alert.alert(t('dietTracker.deleteTitle'), t('dietTracker.deleteMsg', { name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
         await dietApi.delete(id);
         setMeals((prev) => prev.filter((m) => m._id !== id));
       }},
@@ -85,8 +86,8 @@ export default function DietScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Diet Tracker</Text>
-        <Text style={styles.subtitle}>Log your meals every day</Text>
+        <Text style={styles.title}>{t('dietTracker.title')}</Text>
+        <Text style={styles.subtitle}>{t('dietTracker.subtitle')}</Text>
       </View>
 
       <View style={styles.dateNav}>
@@ -104,12 +105,12 @@ export default function DietScreen() {
 
       <View style={styles.typeRow}>
         <TouchableOpacity style={[styles.typeChip, filterType === '' && styles.typeChipActive]} onPress={() => setFilterType('')}>
-          <Text style={[styles.typeChipText, filterType === '' && styles.typeChipTextActive]}>All</Text>
+          <Text style={[styles.typeChipText, filterType === '' && styles.typeChipTextActive]}>{t('common.all')}</Text>
         </TouchableOpacity>
-        {MEAL_TYPES.map((t) => (
-          <TouchableOpacity key={t} style={[styles.typeChip, filterType === t && styles.typeChipActive]} onPress={() => setFilterType(t)}>
-            <Ionicons name={typeIcon(t) as any} size={14} color={filterType === t ? '#fff' : typeColor(t)} />
-            <Text style={[styles.typeChipText, filterType === t && styles.typeChipTextActive]}>{t}</Text>
+        {MEAL_TYPES.map((mt) => (
+          <TouchableOpacity key={mt} style={[styles.typeChip, filterType === mt && styles.typeChipActive]} onPress={() => setFilterType(mt)}>
+            <Ionicons name={typeIcon(mt) as any} size={14} color={filterType === mt ? '#fff' : typeColor(mt)} />
+            <Text style={[styles.typeChipText, filterType === mt && styles.typeChipTextActive]}>{t(`diet.${mt}`)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -124,8 +125,8 @@ export default function DietScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="restaurant-outline" size={36} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>No meals logged</Text>
-            <Text style={styles.emptySub}>Tap + to add a meal for {dateStr(selectedDate).toLowerCase()}</Text>
+            <Text style={styles.emptyTitle}>{t('dietTracker.noMeals')}</Text>
+            <Text style={styles.emptySub}>{t('dietTracker.tapAdd', { date: dateStr(selectedDate).toLowerCase() })}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -154,7 +155,7 @@ export default function DietScreen() {
             {item.calories > 0 && (
               <View style={styles.calorieBadge}>
                 <Ionicons name="flame-outline" size={12} color={Colors.accent} />
-                <Text style={styles.calorieText}>{item.calories} cal</Text>
+                <Text style={styles.calorieText}>{item.calories} {t('dietTracker.cal')}</Text>
               </View>
             )}
           </View>
@@ -179,6 +180,7 @@ export default function DietScreen() {
 function MealModal({ visible, onClose, editMeal, date, onSaved }: {
   visible: boolean; onClose: () => void; editMeal: Meal | null; date: string; onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [type, setType] = useState<string>('breakfast');
   const [name, setName] = useState('');
   const [foods, setFoods] = useState('');
@@ -199,7 +201,7 @@ function MealModal({ visible, onClose, editMeal, date, onSaved }: {
   }, [editMeal]);
 
   const handleSave = async () => {
-    if (!name.trim()) return Alert.alert('Error', 'Meal name is required');
+    if (!name.trim()) return Alert.alert(t('common.error'), t('dietTracker.mealNameRequired'));
     setSaving(true);
     try {
       const foodItems = foods.split(',').map((f) => {
@@ -215,7 +217,7 @@ function MealModal({ visible, onClose, editMeal, date, onSaved }: {
       onSaved();
       onClose();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('common.error'), e.message);
     }
     setSaving(false);
   };
@@ -225,28 +227,28 @@ function MealModal({ visible, onClose, editMeal, date, onSaved }: {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{editMeal ? 'Edit Meal' : 'Add Meal'}</Text>
+            <Text style={styles.modalTitle}>{editMeal ? t('dietTracker.editMeal') : t('dietTracker.addMeal')}</Text>
             <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={Colors.text} /></TouchableOpacity>
           </View>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.label}>Meal Type</Text>
+            <Text style={styles.label}>{t('diet.mealType')}</Text>
             <View style={styles.typeSelectRow}>
-              {MEAL_TYPES.map((t) => (
-                <TouchableOpacity key={t} style={[styles.typeOption, type === t && styles.typeOptionActive]} onPress={() => setType(t)}>
-                  <Text style={[styles.typeOptionText, type === t && styles.typeOptionTextActive]}>{t}</Text>
+              {MEAL_TYPES.map((mt) => (
+                <TouchableOpacity key={mt} style={[styles.typeOption, type === mt && styles.typeOptionActive]} onPress={() => setType(mt)}>
+                  <Text style={[styles.typeOptionText, type === mt && styles.typeOptionTextActive]}>{t(`diet.${mt}`)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.label}>Meal Name *</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="e.g. Oatmeal with Berries" placeholderTextColor={Colors.textLight} />
-            <Text style={styles.label}>Foods</Text>
-            <TextInput style={styles.input} value={foods} onChangeText={setFoods} placeholder="Oats (1 cup), Berries (0.5 cup)" placeholderTextColor={Colors.textLight} />
-            <Text style={styles.label}>Instructions</Text>
-            <TextInput style={[styles.input, styles.textArea]} value={instructions} onChangeText={setInstructions} placeholder="How to prepare..." placeholderTextColor={Colors.textLight} multiline />
-            <Text style={styles.label}>Calories</Text>
+            <Text style={styles.label}>{t('dietTracker.mealName')}</Text>
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder={t('dietTracker.mealNamePh')} placeholderTextColor={Colors.textLight} />
+            <Text style={styles.label}>{t('dietTracker.foods')}</Text>
+            <TextInput style={styles.input} value={foods} onChangeText={setFoods} placeholder={t('dietTracker.foodsPh')} placeholderTextColor={Colors.textLight} />
+            <Text style={styles.label}>{t('diet.instructions')}</Text>
+            <TextInput style={[styles.input, styles.textArea]} value={instructions} onChangeText={setInstructions} placeholder={t('dietTracker.instructionsPh')} placeholderTextColor={Colors.textLight} multiline />
+            <Text style={styles.label}>{t('diet.calories')}</Text>
             <TextInput style={styles.input} value={calories} onChangeText={setCalories} placeholder="350" placeholderTextColor={Colors.textLight} keyboardType="numeric" />
             <TouchableOpacity style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-              <Text style={styles.saveButtonText}>{saving ? 'Saving...' : editMeal ? 'Update Meal' : 'Add Meal'}</Text>
+              <Text style={styles.saveButtonText}>{saving ? t('dietTracker.saving') : editMeal ? t('dietTracker.updateMeal') : t('dietTracker.addMeal')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
   mealFoods: { fontSize: 13, color: Colors.textSecondary, marginBottom: 4 },
   calorieBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   calorieText: { fontSize: 12, color: Colors.accent, fontWeight: '500' },
-  fab: { position: 'absolute', right: 20, bottom: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', ...Shadows.lg },
+  fab: { position: 'absolute', right: 20, bottom: 86, width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', ...Shadows.lg },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: Colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, maxHeight: '80%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.lg },

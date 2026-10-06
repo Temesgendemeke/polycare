@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../store';
+import { useTranslation } from '../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { register, isLoading } = useUserStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,18 +23,18 @@ export default function RegisterScreen() {
 
   const validateStep1 = () => {
     const errors: Record<string, string> = {};
-    if (!name.trim()) errors.name = 'Full name is required';
-    if (email.trim() && !/\S+@\S+\.\S+/.test(email)) errors.email = 'Invalid email format';
+    if (!name.trim()) errors.name = t('auth.fullNameRequired');
+    if (email.trim() && !/\S+@\S+\.\S+/.test(email)) errors.email = t('auth.invalidEmail');
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const validateStep2 = () => {
     const errors: Record<string, string> = {};
-    if (!password) errors.password = 'Password is required';
-    else if (password.length < 6) errors.password = 'At least 6 characters';
-    if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
-    if (!agreeTerms) errors.terms = 'You must agree to continue';
+    if (!password) errors.password = t('auth.passwordRequired');
+    else if (password.length < 6) errors.password = t('auth.passwordMin');
+    if (password !== confirmPassword) errors.confirmPassword = t('auth.passwordsNoMatch');
+    if (!agreeTerms) errors.terms = t('auth.mustAgree');
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -59,8 +61,8 @@ export default function RegisterScreen() {
               <View style={styles.logoWrap}>
                 <Image source={require('../assets/icon.png')} style={{ width: 64, height: 64 }} resizeMode="contain" />
               </View>
-              <Text style={styles.appName}>Create Account</Text>
-              <Text style={styles.tagline}>Step {step} of 2 — {step === 1 ? 'Personal Info' : 'Security'}</Text>
+              <Text style={styles.appName}>{t('auth.createAccount')}</Text>
+              <Text style={styles.tagline}>{t('auth.stepOf', { step })} — {step === 1 ? t('auth.personalInfo') : t('auth.security')}</Text>
             </View>
             <View style={styles.stepsRow}>
               <View style={[styles.stepDot, step >= 1 && styles.stepDotActive]} />
@@ -70,46 +72,46 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.formCard}>
-            <Text style={styles.formTitle}>{step === 1 ? 'Personal Information' : 'Account Security'}</Text>
+            <Text style={styles.formTitle}>{step === 1 ? t('auth.personalInformation') : t('auth.accountSecurity')}</Text>
             <Text style={styles.formSubtitle}>
-              {step === 1 ? 'Tell us about yourself' : 'Create a secure password for your account'}
+              {step === 1 ? t('auth.tellAbout') : t('auth.securePassword')}
             </Text>
 
             {step === 1 ? (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Full Name *</Text>
+                  <Text style={styles.inputLabel}>{t('auth.fullName')}</Text>
                   <View style={[styles.inputWrapper, fieldErrors.name ? styles.inputError : undefined]}>
                     <Ionicons name="person-outline" size={18} color={fieldErrors.name ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={name} onChangeText={(v) => { setName(v); setFieldErrors((p) => { const n = { ...p }; delete n.name; return n; }); }} placeholder="Your full name" placeholderTextColor={Colors.textLight} style={styles.input} autoCapitalize="words" />
+                    <TextInput value={name} onChangeText={(v) => { setName(v); setFieldErrors((p) => { const n = { ...p }; delete n.name; return n; }); }} placeholder={t('auth.namePlaceholder')} placeholderTextColor={Colors.textLight} style={styles.input} autoCapitalize="words" />
                   </View>
                   {fieldErrors.name && <Text style={styles.fieldError}>{fieldErrors.name}</Text>}
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Email</Text>
+                  <Text style={styles.inputLabel}>{t('auth.email')}</Text>
                   <View style={[styles.inputWrapper, fieldErrors.email ? styles.inputError : undefined]}>
                     <Ionicons name="mail-outline" size={18} color={fieldErrors.email ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={email} onChangeText={(v) => { setEmail(v); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n; }); }} placeholder="your@email.com" placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
+                    <TextInput value={email} onChangeText={(v) => { setEmail(v); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n; }); }} placeholder={t('auth.emailPlaceholder')} placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
                   </View>
                   {fieldErrors.email && <Text style={styles.fieldError}>{fieldErrors.email}</Text>}
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Phone</Text>
+                  <Text style={styles.inputLabel}>{t('auth.phone')}</Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="call-outline" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={phone} onChangeText={setPhone} placeholder="+251..." placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="phone-pad" />
+                    <TextInput value={phone} onChangeText={setPhone} placeholder={t('auth.phonePlaceholder')} placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="phone-pad" />
                   </View>
                 </View>
               </>
             ) : (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Password *</Text>
+                  <Text style={styles.inputLabel}>{t('auth.password')} *</Text>
                   <View style={[styles.inputWrapper, fieldErrors.password ? styles.inputError : undefined]}>
                     <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.password ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={password} onChangeText={(v) => { setPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n; }); }} placeholder="At least 6 characters" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
+                    <TextInput value={password} onChangeText={(v) => { setPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n; }); }} placeholder={t('auth.passwordMin')} placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
                       <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textSecondary} />
                     </TouchableOpacity>
@@ -118,10 +120,10 @@ export default function RegisterScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Confirm Password *</Text>
+                  <Text style={styles.inputLabel}>{t('auth.confirmPassword')}</Text>
                   <View style={[styles.inputWrapper, fieldErrors.confirmPassword ? styles.inputError : undefined]}>
                     <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.confirmPassword ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={confirmPassword} onChangeText={(v) => { setConfirmPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.confirmPassword; return n; }); }} placeholder="Re-enter password" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
+                    <TextInput value={confirmPassword} onChangeText={(v) => { setConfirmPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.confirmPassword; return n; }); }} placeholder={t('auth.reenterPassword')} placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
                   </View>
                   {fieldErrors.confirmPassword && <Text style={styles.fieldError}>{fieldErrors.confirmPassword}</Text>}
                 </View>
@@ -131,7 +133,7 @@ export default function RegisterScreen() {
                     {agreeTerms && <Ionicons name="checkmark" size={14} color="#fff" />}
                   </View>
                   <Text style={styles.termsText}>
-                    I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and <Text style={styles.termsLink}>Privacy Policy</Text>
+                    {t('auth.agreeTo')}<Text style={styles.termsLink}>{t('settings.terms')}</Text>{t('auth.and')}<Text style={styles.termsLink}>{t('settings.privacy')}</Text>
                   </Text>
                 </TouchableOpacity>
                 {fieldErrors.terms && <Text style={styles.fieldError}>{fieldErrors.terms}</Text>}
@@ -140,25 +142,25 @@ export default function RegisterScreen() {
 
             {step === 1 ? (
               <TouchableOpacity style={styles.primaryButton} onPress={handleRegister} activeOpacity={0.85}>
-                <Text style={styles.primaryButtonText}>Continue</Text>
+                <Text style={styles.primaryButtonText}>{t('auth.continue')}</Text>
                 <Ionicons name="arrow-forward" size={18} color="#fff" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[styles.primaryButton, isLoading && styles.buttonLoading]} onPress={handleRegister} disabled={isLoading} activeOpacity={0.85}>
-                {isLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryButtonText}>Create Account</Text>}
+                {isLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.primaryButtonText}>{t('auth.createAccount')}</Text>}
               </TouchableOpacity>
             )}
 
             {step === 2 && (
               <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)} activeOpacity={0.7}>
                 <Ionicons name="arrow-back" size={16} color={Colors.textSecondary} />
-                <Text style={styles.backButtonText}>Back to Personal Info</Text>
+                <Text style={styles.backButtonText}>{t('auth.backToPersonal')}</Text>
               </TouchableOpacity>
             )}
 
             <View style={styles.loginRow}>
-              <Text style={styles.loginText}>Already have an account? </Text>
-              <Link href="/login"><Text style={styles.loginLink}>Sign In</Text></Link>
+              <Text style={styles.loginText}>{t('auth.hasAccount')}</Text>
+              <Link href="/login"><Text style={styles.loginLink}>{t('auth.signIn')}</Text></Link>
             </View>
           </View>
         </ScrollView>

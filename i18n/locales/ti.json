@@ -169,7 +169,15 @@
     "emptyTitle": "ገና ዝተጨምር መድሃኒት የለን",
     "emptyHint": "ናይ ሕክምና መደብካ ንምህናጽ መድሃኒት ጨምር ዝብል ጠውቕ።",
     "deleteTitle": "መድሃኒት ሰርዝ",
-    "removeConfirm": "{name} ክትሰርዞ ድኣ እትደሊ?"
+    "removeConfirm": "{name} ክትሰርዞ ድኣ እትደሊ?",
+    "sampleMeds": "ናሙና መድሃኒታት",
+    "taken": "ዝተወስደ",
+    "scheduled": "ዝተመድበ",
+    "doctorTitle": "ትእዛዝ ሓኪም",
+    "doctorSubtitle": "ሓኪምካ ዝኣዘዞ - ነፍሲ መጠን ምስ ትወስድ ምልክት ግበር።",
+    "takeDose": "መጠን ውሰድ",
+    "completed": "ተወዲኡ",
+    "undo": "መለስ"
   },
   "reminders": {
     "title": "መዘኻኸሪታት መድሃኒት",
@@ -222,7 +230,10 @@
     "wed": "ረቡዕ",
     "thu": "ሓሙስ",
     "fri": "ዓርቢ",
-    "sat": "ቀዳም"
+    "sat": "ቀዳም",
+    "testScheduled": "ናይ ፈተነ መዘኻኸሪ ተመዲቡ! ኣብ 2 ሰከንድ ይበጽሕ።",
+    "permissionRequired": "ፍቓድ የድሊ",
+    "permissionMsg": "ፍቓድ መዘኻኸሪ ኣይተዋህበን። በጃኻ ኣብ ቅንብራት መሳርሒኻ መዘኻኸሪታት ኣኽእል።"
   },
   "exercise": {
     "title": "መደባት ምንቅስቓስ",

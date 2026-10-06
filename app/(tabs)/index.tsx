@@ -213,9 +213,9 @@ export default function HomeScreen() {
               <Ionicons name="alarm" size={18} color={Colors.accentDark} />
             </View>
             <View style={styles.focusTextWrap}>
-              <Text style={styles.focusTitle}>{t('home.todayReminders')}</Text>
+              <Text style={styles.focusTitle}>{t('dashboard.todaysFocus')}</Text>
               <Text style={styles.focusSubtitle}>
-                Keep your medication timing consistent for better control.
+                {t('dashboard.focusHint')}
               </Text>
             </View>
           </View>
@@ -223,24 +223,24 @@ export default function HomeScreen() {
             style={styles.focusButton}
             onPress={() => router.push('/(tabs)/reminders')}
           >
-            <Text style={styles.focusButtonText}>Open Reminders</Text>
+            <Text style={styles.focusButtonText}>{t('dashboard.openReminders')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Current Medications */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Current Medications</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.currentMeds')}</Text>
           <TouchableOpacity onPress={() => router.push('/(tabs)/medications')}>
-            <Text style={styles.viewAllText}>View all</Text>
+            <Text style={styles.viewAllText}>{t('dashboard.viewAll')}</Text>
           </TouchableOpacity>
         </View>
 
         {activeMedications.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="medkit-outline" size={26} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>No medications yet</Text>
+            <Text style={styles.emptyTitle}>{t('dashboard.noMeds')}</Text>
             <Text style={styles.emptySubtext}>
-              Add your first medication to start reminders and tracking.
+              {t('dashboard.noMedsHint')}
             </Text>
           </View>
         ) : (
@@ -248,7 +248,7 @@ export default function HomeScreen() {
             <View key={medication.id} style={styles.medicationCard}>
               <View style={styles.medicationBadge}>
                 <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
-                <Text style={styles.medicationBadgeText}>Active</Text>
+                <Text style={styles.medicationBadgeText}>{t('common.active')}</Text>
               </View>
               <Text style={styles.medicationName}>{medication.name}</Text>
               <Text style={styles.medicationDetails}>
@@ -306,7 +306,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    gap: 6,
     borderWidth: 1,
     borderColor: '#4A80D8',
   },

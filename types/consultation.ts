@@ -39,4 +39,6 @@ export interface Pharmacist {
   rating?: number;
   available: boolean;
   nextSlot?: string;
+  avatar?: string;
+  gender?: 'female' | 'male';
 }

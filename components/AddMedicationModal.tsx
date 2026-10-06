@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMedicationStore, useReminderStore } from '../store';
+import { useTranslation } from '../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 import { Medication, DoseUnit, Frequency } from '../types';
 
@@ -18,6 +20,7 @@ const FREQUENCIES: Frequency[] = [
 ];
 
 export default function AddMedicationModal({ visible, onClose, editMedication }: Props) {
+  const { t } = useTranslation();
   const addMedication = useMedicationStore((s) => s.addMedication);
   const updateMedication = useMedicationStore((s) => s.updateMedication);
   const addReminder = useReminderStore((s) => s.addReminder);
@@ -40,8 +43,8 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
   };
 
   const handleSave = () => {
-    if (!name.trim()) { Alert.alert('Required', 'Medication name is required'); return; }
-    if (!dosage || isNaN(Number(dosage))) { Alert.alert('Required', 'Valid dosage is required'); return; }
+    if (!name.trim()) { Alert.alert(t('common.required'), t('medModal.nameRequired')); return; }
+    if (!dosage || isNaN(Number(dosage))) { Alert.alert(t('common.required'), t('medModal.dosageRequired')); return; }
 
     const med: Medication = {
       id: editMedication?.id || Date.now().toString(),
@@ -98,27 +101,27 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
             <Ionicons name="close" size={24} color={Colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{editMedication ? 'Edit' : 'Add'} Medication</Text>
+          <Text style={styles.headerTitle}>{editMedication ? t('medModal.editTitle') : t('medModal.addTitle')}</Text>
           <TouchableOpacity onPress={handleSave}>
-            <Text style={styles.saveText}>Save</Text>
+            <Text style={styles.saveText}>{t('common.save')}</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Medication Name *</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="e.g. Metformin" placeholderTextColor={Colors.textLight} />
+          <Text style={styles.label}>{t('medications.medicationName')} *</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder={t('medModal.medNamePh')} placeholderTextColor={Colors.textLight} />
 
-          <Text style={styles.label}>Generic Name</Text>
-          <TextInput style={styles.input} value={genericName} onChangeText={setGenericName} placeholder="e.g. Metformin HCl" placeholderTextColor={Colors.textLight} />
+          <Text style={styles.label}>{t('medications.genericName')}</Text>
+          <TextInput style={styles.input} value={genericName} onChangeText={setGenericName} placeholder={t('medModal.genericPh')} placeholderTextColor={Colors.textLight} />
 
           <View style={styles.row}>
             <View style={styles.halfField}>
-              <Text style={styles.label}>Dosage *</Text>
+              <Text style={styles.label}>{t('medications.dosage')} *</Text>
               <TextInput style={styles.input} value={dosage} onChangeText={setDosage} placeholder="500" keyboardType="decimal-pad" placeholderTextColor={Colors.textLight} />
             </View>
             <View style={styles.halfField}>
@@ -133,7 +136,7 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
             </View>
           </View>
 
-          <Text style={styles.label}>Frequency</Text>
+          <Text style={styles.label}>{t('medications.frequency')}</Text>
           <View style={styles.pickerRow}>
             {FREQUENCIES.map((f) => (
               <TouchableOpacity key={f} style={[styles.freqPill, frequency === f && styles.pillActive]} onPress={() => setFrequency(f)}>
@@ -144,27 +147,27 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
             ))}
           </View>
 
-          <Text style={styles.label}>Instructions</Text>
-          <TextInput style={[styles.input, styles.textArea]} value={instructions} onChangeText={setInstructions} placeholder="e.g. Take with food" multiline numberOfLines={3} placeholderTextColor={Colors.textLight} />
+          <Text style={styles.label}>{t('medications.instructions')}</Text>
+          <TextInput style={[styles.input, styles.textArea]} value={instructions} onChangeText={setInstructions} placeholder={t('medModal.instructionsPh')} multiline numberOfLines={3} placeholderTextColor={Colors.textLight} />
 
           <View style={styles.row}>
             <View style={styles.halfField}>
-              <Text style={styles.label}>Start Date</Text>
-              <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} placeholder="YYYY-MM-DD" placeholderTextColor={Colors.textLight} />
+              <Text style={styles.label}>{t('medications.startDate')}</Text>
+              <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} placeholder={t('medModal.startDatePh')} placeholderTextColor={Colors.textLight} />
             </View>
             <View style={styles.halfField}>
-              <Text style={styles.label}>End Date (optional)</Text>
-              <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} placeholder="YYYY-MM-DD" placeholderTextColor={Colors.textLight} />
+              <Text style={styles.label}>{t('medModal.endDateOptional')}</Text>
+              <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} placeholder={t('medModal.startDatePh')} placeholderTextColor={Colors.textLight} />
             </View>
           </View>
 
-          <Text style={styles.label}>Current Stock</Text>
-          <TextInput style={styles.input} value={currentStock} onChangeText={setCurrentStock} placeholder="e.g. 30 tablets" keyboardType="decimal-pad" placeholderTextColor={Colors.textLight} />
+          <Text style={styles.label}>{t('medModal.stock')}</Text>
+          <TextInput style={styles.input} value={currentStock} onChangeText={setCurrentStock} placeholder={t('medModal.stockPh')} keyboardType="decimal-pad" placeholderTextColor={Colors.textLight} />
 
-          <Text style={styles.label}>Notes</Text>
-          <TextInput style={[styles.input, styles.textArea]} value={notes} onChangeText={setNotes} placeholder="Additional notes..." multiline numberOfLines={2} placeholderTextColor={Colors.textLight} />
+          <Text style={styles.label}>{t('medications.notes')}</Text>
+          <TextInput style={[styles.input, styles.textArea]} value={notes} onChangeText={setNotes} placeholder={t('medModal.notesPh')} multiline numberOfLines={2} placeholderTextColor={Colors.textLight} />
         </ScrollView>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

@@ -169,7 +169,15 @@
     "emptyTitle": "Amma dawaan hin dabalamne",
     "emptyHint": "Karoora yaalaa kee ijaaruuf dawicha dabali tuqi.",
     "deleteTitle": "Dawaa Balleessi",
-    "removeConfirm": "{name} balleessuu?"
+    "removeConfirm": "{name} balleessuu?",
+    "sampleMeds": "Dawaawwan Fakkeenyaa",
+    "taken": "Fudhatame",
+    "scheduled": "Sagantaa",
+    "doctorTitle": "Ajaja Doktaraa",
+    "doctorSubtitle": "Doktari keessan ajaje - doozii fudhattan hunduma mallatteessaa.",
+    "takeDose": "Doozii fudhadhu",
+    "completed": "Xumurameera",
+    "undo": "Deebisi"
   },
   "reminders": {
     "title": "Yaadachiisawwan Dawaawaa",
@@ -222,7 +230,10 @@
     "wed": "Rob",
     "thu": "Kam",
     "fri": "Jim",
-    "sat": "San"
+    "sat": "San",
+    "testScheduled": "Beeksisni qormaataa kennamera! Sekondii 2 keessatti ni dhufa.",
+    "permissionRequired": "Heeyyama Barbaadama",
+    "permissionMsg": "Heeyyamni beeksisaa hin kennamne. Maaloo qindaa’ina meeshaa keessanii keessatti beeksisawwan dandeessisaa."
   },
   "exercise": {
     "title": "Karoorawwan Sochii",

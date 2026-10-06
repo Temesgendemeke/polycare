@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
+import { useTranslation } from '../hooks';
 
 interface Article {
   id: string;
@@ -80,6 +81,7 @@ const LANGUAGES = ['All', 'English', 'Amharic', 'Afaan Oromoo'];
 
 export default function EducationScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [selectedLang, setSelectedLang] = useState('All');
   const [readingArticle, setReadingArticle] = useState<Article | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -112,9 +114,9 @@ export default function EducationScreen() {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => { Speech.stop(); router.back(); }}>
           <Ionicons name="arrow-back" size={20} color={Colors.text} />
-          <Text style={styles.backBtnText}>Back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Education Hub</Text>
+        <Text style={styles.headerTitle}>{t('educationHub.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -123,15 +125,15 @@ export default function EducationScreen() {
         <View style={styles.bannerCard}>
           <Ionicons name="school" size={28} color={Colors.primary} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Multilingual Health Learning</Text>
+            <Text style={styles.bannerTitle}>{t('educationHub.subtitle')}</Text>
             <Text style={styles.bannerSub}>
-              Voice-accessible guides developed for patients managing chronic non-communicable conditions.
+              {t('educationHub.desc')}
             </Text>
           </View>
         </View>
 
         {/* Language Selection Pills */}
-        <Text style={styles.sectionLabel}>Select Language</Text>
+        <Text style={styles.sectionLabel}>{t('educationHub.selectLanguage')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll}>
           {LANGUAGES.map((lang) => (
             <TouchableOpacity
@@ -140,7 +142,7 @@ export default function EducationScreen() {
               onPress={() => setSelectedLang(lang)}
             >
               <Text style={[styles.pillText, selectedLang === lang && styles.pillTextActive]}>
-                {lang}
+                {lang === 'All' ? t('educationHub.all') : lang}
               </Text>
             </TouchableOpacity>
           ))}
@@ -160,7 +162,7 @@ export default function EducationScreen() {
                   <Text style={styles.articleTitle}>{article.title}</Text>
                   <Text style={styles.readTime}>
                     <Ionicons name="book-outline" size={12} color={Colors.textSecondary} />{' '}
-                    {article.readTime}
+                    {article.readTime.split(' ')[0]} {t('educationHub.minRead')}
                   </Text>
                 </View>
 
@@ -181,7 +183,7 @@ export default function EducationScreen() {
                   style={styles.readBtn}
                   onPress={() => setReadingArticle(article)}
                 >
-                  <Text style={styles.readBtnText}>Read</Text>
+                  <Text style={styles.readBtnText}>{t('education.read')}</Text>
                 </TouchableOpacity>
               </View>
             );
@@ -202,7 +204,7 @@ export default function EducationScreen() {
               <Ionicons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle} numberOfLines={1}>
-              {readingArticle?.category} Guide
+              {readingArticle?.category} {t('educationHub.guide')}
             </Text>
             {readingArticle?.voice && (
               <TouchableOpacity
@@ -220,7 +222,7 @@ export default function EducationScreen() {
           <ScrollView contentContainerStyle={styles.modalBody}>
             <Text style={styles.modalArticleTitle}>{readingArticle?.title}</Text>
             <Text style={styles.modalMeta}>
-              {readingArticle?.readTime} • Language: {readingArticle?.language}
+              {readingArticle?.readTime?.split(' ')[0]} {t('educationHub.minRead')} • {t('educationHub.languageLabel')}{readingArticle?.language}
             </Text>
             <View style={styles.divider} />
             <Text style={styles.modalContent}>{readingArticle?.content}</Text>
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backBtnText: { ...Typography.fontSize.sm, color: Colors.text, ...Typography.fontWeight.medium },
-  headerTitle: { ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
+  headerTitle: { flex: 1, textAlign: 'center', marginHorizontal: 8, ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
   scrollBody: { padding: Spacing.md, paddingBottom: 110, gap: 14 },
   bannerCard: {
     flexDirection: 'row',

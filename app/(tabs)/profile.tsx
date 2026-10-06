@@ -21,10 +21,10 @@ export default function ProfileScreen() {
   const [emailInput, setEmailInput] = useState('');
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings.logoutTitle'), t('settings.logoutMsg'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Logout',
+        text: t('settings.logout'),
         style: 'destructive',
         onPress: async () => {
           await clearUser();
@@ -43,8 +43,8 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={34} color={Colors.primary} />
           </View>
           <View style={styles.userTextWrap}>
-            <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
-            <Text style={styles.userEmail}>{user?.email || 'Create an account to save profile details.'}</Text>
+            <Text style={styles.userName}>{user?.name || t('profile.guest')}</Text>
+            <Text style={styles.userEmail}>{user?.email || t('profile.guestHint')}</Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
             <Ionicons name="pencil" size={15} color={Colors.primary} />
@@ -55,29 +55,29 @@ export default function ProfileScreen() {
         <View style={styles.healthSummaryCard}>
           <View style={styles.healthSummaryHeader}>
             <View>
-              <Text style={styles.healthSummaryTitle}>NCD Patient Profile</Text>
-              <Text style={styles.healthSummarySubtitle}>Chronic Care & Vital Records</Text>
+              <Text style={styles.healthSummaryTitle}>{t('profile.ncdProfile')}</Text>
+              <Text style={styles.healthSummarySubtitle}>{t('profile.chronicCare')}</Text>
             </View>
             <View style={styles.healthScorePill}>
-              <Text style={styles.healthScorePillLabel}>Health Score</Text>
+              <Text style={styles.healthScorePillLabel}>{t('profile.healthScore')}</Text>
               <Text style={styles.healthScorePillValue}>82 / 100</Text>
             </View>
           </View>
 
           <View style={styles.summaryStatsRow}>
             <View style={styles.summaryStatItem}>
-              <Text style={styles.summaryStatLabel}>Conditions</Text>
-              <Text style={styles.summaryStatValue}>HTN & T2D</Text>
+              <Text style={styles.summaryStatLabel}>{t('profile.conditions')}</Text>
+              <Text style={styles.summaryStatValue}>{t('profile.conditionsVal')}</Text>
             </View>
             <View style={styles.summaryStatDivider} />
             <View style={styles.summaryStatItem}>
-              <Text style={styles.summaryStatLabel}>Age</Text>
-              <Text style={styles.summaryStatValue}>54 yrs</Text>
+              <Text style={styles.summaryStatLabel}>{t('history.age')}</Text>
+              <Text style={styles.summaryStatValue}>{t('profile.ageVal')}</Text>
             </View>
             <View style={styles.summaryStatDivider} />
             <View style={styles.summaryStatItem}>
-              <Text style={styles.summaryStatLabel}>Active Meds</Text>
-              <Text style={styles.summaryStatValue}>5 Prescribed</Text>
+              <Text style={styles.summaryStatLabel}>{t('dashboard.activeMeds')}</Text>
+              <Text style={styles.summaryStatValue}>{t('profile.activeMedsVal')}</Text>
             </View>
           </View>
 
@@ -87,14 +87,14 @@ export default function ProfileScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="clipboard-outline" size={18} color={Colors.textOnPrimary} />
-            <Text style={styles.openHistoryBtnText}>Open Patient History Form (13 Sections)</Text>
+            <Text style={styles.openHistoryBtnText}>{t('profile.openHistory')}</Text>
             <Ionicons name="chevron-forward" size={16} color={Colors.textOnPrimary} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
-          <Text style={styles.sectionSubtitle}>Choose your preferred app language.</Text>
+          <Text style={styles.sectionSubtitle}>{t('profile.chooseLang')}</Text>
 
           <View style={styles.languageOptions}>
             {availableLanguages.map((lang) => {
@@ -116,28 +116,28 @@ export default function ProfileScreen() {
 
         {user ? (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={styles.sectionTitle}>{t('profile.account')}</Text>
             <View style={styles.accountRow}>
-              <Text style={styles.accountLabel}>Name</Text>
+              <Text style={styles.accountLabel}>{t('profile.name')}</Text>
               <Text style={styles.accountValue}>{user.name}</Text>
             </View>
             <View style={styles.accountRow}>
-              <Text style={styles.accountLabel}>Email</Text>
-              <Text style={styles.accountValue}>{user.email || 'Not set'}</Text>
+              <Text style={styles.accountLabel}>{t('profile.email')}</Text>
+              <Text style={styles.accountValue}>{user.email || t('common.notSet')}</Text>
             </View>
             <View style={styles.accountRow}>
-              <Text style={styles.accountLabel}>Phone</Text>
-              <Text style={styles.accountValue}>{user.phone || 'Not set'}</Text>
+              <Text style={styles.accountLabel}>{t('profile.phone')}</Text>
+              <Text style={styles.accountValue}>{user.phone || t('common.notSet')}</Text>
             </View>
             <View style={styles.accountRowLast}>
-              <Text style={styles.accountLabel}>Member Since</Text>
+              <Text style={styles.accountLabel}>{t('profile.memberSince')}</Text>
               <Text style={styles.accountValue}>{new Date(user.createdAt).toLocaleDateString()}</Text>
             </View>
 
             {user.role === 'admin' && (
               <TouchableOpacity style={styles.adminButton} onPress={() => router.push('/admin')}>
                 <Ionicons name="shield-checkmark-outline" size={20} color={Colors.primary} />
-                <Text style={styles.adminButtonText}>Admin Panel</Text>
+                <Text style={styles.adminButtonText}>{t('profile.adminPanel')}</Text>
                 <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
               </TouchableOpacity>
             )}
@@ -148,15 +148,15 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Sign In Required</Text>
-            <Text style={styles.sectionSubtitle}>Create an account or sign in to sync your health data across devices.</Text>
+            <Text style={styles.sectionTitle}>{t('profile.signInRequired')}</Text>
+            <Text style={styles.sectionSubtitle}>{t('profile.signInHint')}</Text>
 
             <TouchableOpacity
               style={styles.createAccountButton}
               onPress={() => router.push('/login')}
             >
               <Ionicons name="log-in" size={18} color={Colors.textOnPrimary} />
-              <Text style={styles.createAccountText}>Sign In</Text>
+              <Text style={styles.createAccountText}>{t('auth.signIn')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -164,7 +164,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/register')}
             >
               <Ionicons name="person-add" size={18} color={Colors.textOnPrimary} />
-              <Text style={styles.createAccountText}>Create Account</Text>
+              <Text style={styles.createAccountText}>{t('auth.createAccount')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -186,7 +186,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionTitle}>{t('profile.aboutTitle')}</Text>
           <TouchableOpacity style={styles.settingItem}>
             <Text style={styles.settingText}>{t('settings.privacy')}</Text>
             <Ionicons name="chevron-forward" size={18} color={Colors.textLight} />

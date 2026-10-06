@@ -15,18 +15,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation, useNotifications } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 import { useReminderStore, useMedicationStore } from '../../store';
+import { syncReminderToSlot } from '../../lib/doseSync';
 import { Reminder } from '../../types';
-
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const PRESET_TIMES = [
-  { label: 'Morning', time: '08:00' },
-  { label: 'Noon', time: '12:00' },
-  { label: 'Evening', time: '18:00' },
-  { label: 'Bedtime', time: '21:00' },
-];
 
 export default function RemindersScreen() {
   const { t } = useTranslation();
+  const DAY_NAMES = [t('reminders.sun'), t('reminders.mon'), t('reminders.tue'), t('reminders.wed'), t('reminders.thu'), t('reminders.fri'), t('reminders.sat')];
+  const PRESET_TIMES = [
+    { label: t('reminders.morning'), time: '08:00' },
+    { label: t('reminders.noon'), time: '12:00' },
+    { label: t('reminders.evening'), time: '18:00' },
+    { label: t('reminders.bedtime'), time: '21:00' },
+  ];
   const { medications } = useMedicationStore();
   const {
     reminders,
@@ -86,7 +86,7 @@ export default function RemindersScreen() {
   const handleDayToggle = (dayIndex: number) => {
     if (selectedDays.includes(dayIndex)) {
       if (selectedDays.length === 1) {
-        Alert.alert('Notice', 'At least one day must be selected.');
+        Alert.alert(t('common.notice'), t('reminders.atLeastOneDay'));
         return;
       }
       setSelectedDays(selectedDays.filter((d) => d !== dayIndex));
@@ -107,11 +107,11 @@ export default function RemindersScreen() {
     const formattedTime = time.trim();
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(formattedTime)) {
-      Alert.alert('Invalid Time', 'Please enter a valid time in HH:mm format (e.g., 08:30 or 20:00).');
+      Alert.alert(t('reminders.invalidTime'), t('reminders.invalidTimeMsg'));
       return;
     }
 
-    const title = customTitle.trim() || medName(selectedMedId) || 'Medication';
+    const title = customTitle.trim() || medName(selectedMedId) || t('reminders.medicationFallback');
 
     if (editingReminder) {
       await updateReminder(
@@ -149,11 +149,11 @@ export default function RemindersScreen() {
       'Your medication reminders are configured and working properly!'
     );
     if (res) {
-      Alert.alert('Success', 'Test notification scheduled! It will arrive in 2 seconds.');
+      Alert.alert(t('common.success'), t('reminders.testScheduled'));
     } else {
       Alert.alert(
-        'Permission Required',
-        'Notification permission was not granted. Please enable notifications in your device settings.'
+        t('reminders.permissionRequired'),
+        t('reminders.permissionMsg')
       );
     }
   };
@@ -164,7 +164,7 @@ export default function RemindersScreen() {
       <View style={styles.headerCard}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{t('reminders.title')}</Text>
-          <Text style={styles.subtitle}>Scheduled dosage alerts on your phone</Text>
+          <Text style={styles.subtitle}>{t('reminders.subtitle')}</Text>
         </View>
         <TouchableOpacity style={styles.addButton} onPress={openAddModal}>
           <Ionicons name="add" size={24} color={Colors.textOnPrimary} />
@@ -176,8 +176,8 @@ export default function RemindersScreen() {
         <TouchableOpacity style={styles.permBanner} onPress={requestPermissions}>
           <Ionicons name="notifications-outline" size={20} color={Colors.accentDark} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.permBannerTitle}>Enable Notifications</Text>
-            <Text style={styles.permBannerSub}>Tap to grant permission so alarms ring on time</Text>
+            <Text style={styles.permBannerTitle}>{t('reminders.enableNotif')}</Text>
+            <Text style={styles.permBannerSub}>{t('reminders.enableHint')}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={Colors.accentDark} />
         </TouchableOpacity>
@@ -187,29 +187,29 @@ export default function RemindersScreen() {
       <View style={styles.statsRow}>
         <View style={styles.statBadge}>
           <Text style={styles.statValue}>{reminders.filter((r) => r.enabled).length}</Text>
-          <Text style={styles.statLabel}>Active</Text>
+          <Text style={styles.statLabel}>{t('common.active')}</Text>
         </View>
         <View style={styles.statBadge}>
           <Text style={styles.statValue}>{reminders.length}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statLabel}>{t('common.total')}</Text>
         </View>
-        {/* <TouchableOpacity style={styles.testBtn} onPress={handleTestNotification}>
+        <TouchableOpacity style={styles.testBtn} onPress={handleTestNotification}>
           <Ionicons name="flash-outline" size={16} color={Colors.primary} />
           <Text style={styles.testBtnText}>Test Alert</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
 
       {/* Reminders List */}
       {sortedReminders.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="alarm-outline" size={48} color={Colors.textLight} />
-          <Text style={styles.emptyText}>No reminders set yet</Text>
+          <Text style={styles.emptyText}>{t('reminders.emptyTitle')}</Text>
           <Text style={styles.emptySubtext}>
-            Create your first reminder to receive alerts when it's time for your medication.
+            {t('reminders.emptyHint')}
           </Text>
           <TouchableOpacity style={styles.createFirstBtn} onPress={openAddModal}>
             <Ionicons name="add-circle-outline" size={20} color={Colors.textOnPrimary} />
-            <Text style={styles.createFirstBtnText}>Create Reminder</Text>
+            <Text style={styles.createFirstBtnText}>{t('reminders.createReminder')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -245,16 +245,16 @@ export default function RemindersScreen() {
                     <Text style={styles.reminderTimeText}>{item.time}</Text>
                     <Text style={styles.daysText}>
                       • {item.days.length === 7
-                        ? 'Everyday'
+                        ? t('reminders.everyday')
                         : item.days.length === 0
-                        ? 'Everyday'
+                        ? t('reminders.everyday')
                         : item.days.sort().map((d) => DAY_NAMES[d]).join(', ')}
                     </Text>
                   </View>
 
                   {item.lastTaken && (
                     <Text style={styles.lastTaken}>
-                      ✓ Taken today ({new Date(item.lastTaken).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                      ✓ {t('reminders.takenToday')} ({new Date(item.lastTaken).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                     </Text>
                   )}
                 </View>
@@ -266,7 +266,8 @@ export default function RemindersScreen() {
                     style={styles.takenButton}
                     onPress={() => {
                       markAsTaken(item.id);
-                      Alert.alert('Recorded', `Marked ${item.title || medName(item.medicationId)} as taken!`);
+                      syncReminderToSlot(item);
+                      Alert.alert(t('reminders.recorded'), t('reminders.markedTaken', { name: item.title || medName(item.medicationId) }));
                     }}
                   >
                     <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
@@ -284,11 +285,11 @@ export default function RemindersScreen() {
                   style={styles.actionIcon}
                   onPress={() => {
                     Alert.alert(
-                      'Delete Reminder',
-                      `Remove alert for ${item.title || medName(item.medicationId)}?`,
+                      t('reminders.deleteTitle'),
+                      t('reminders.deleteMsg', { name: item.title || medName(item.medicationId) }),
                       [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Delete', style: 'destructive', onPress: () => deleteReminder(item.id) },
+                        { text: t('common.cancel'), style: 'cancel' },
+                        { text: t('common.delete'), style: 'destructive', onPress: () => deleteReminder(item.id) },
                       ]
                     );
                   }}
@@ -314,16 +315,16 @@ export default function RemindersScreen() {
               <Ionicons name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>
-              {editingReminder ? 'Edit Reminder' : 'New Reminder'}
+              {editingReminder ? t('reminders.editReminder') : t('reminders.newReminder')}
             </Text>
             <TouchableOpacity onPress={handleSaveReminder}>
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Text style={styles.saveBtnText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
             {/* Medication Selector */}
-            <Text style={styles.fieldLabel}>Select Medication</Text>
+            <Text style={styles.fieldLabel}>{t('reminders.selectMedication')}</Text>
             {medications.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
                 {medications.map((m) => (
@@ -344,17 +345,17 @@ export default function RemindersScreen() {
               </ScrollView>
             )}
 
-            <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Reminder Name / Title *</Text>
+            <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>{t('reminders.reminderName')}</Text>
             <TextInput
               style={styles.input}
               value={customTitle}
               onChangeText={setCustomTitle}
-              placeholder="e.g. Morning Metformin"
+              placeholder={t('reminders.reminderNamePh')}
               placeholderTextColor={Colors.textLight}
             />
 
             {/* Time Configuration */}
-            <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Reminder Time (24h HH:mm) *</Text>
+            <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>{t('reminders.reminderTime')}</Text>
             <View style={styles.timeInputRow}>
               <TextInput
                 style={[styles.input, styles.timeInput]}
@@ -381,10 +382,10 @@ export default function RemindersScreen() {
 
             {/* Days Selection */}
             <View style={styles.daysHeaderRow}>
-              <Text style={styles.fieldLabel}>Repeat On Days</Text>
+              <Text style={styles.fieldLabel}>{t('reminders.repeatDays')}</Text>
               <TouchableOpacity onPress={toggleSelectAllDays}>
                 <Text style={styles.allDaysLink}>
-                  {selectedDays.length === 7 ? 'Deselect All' : 'Select All'}
+                  {selectedDays.length === 7 ? t('reminders.deselectAll') : t('reminders.selectAll')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -407,12 +408,12 @@ export default function RemindersScreen() {
             </View>
 
             {/* Dosage */}
-            <Text style={[styles.fieldLabel, { marginTop: Spacing.lg }]}>Dosage (Optional)</Text>
+            <Text style={[styles.fieldLabel, { marginTop: Spacing.lg }]}>{t('reminders.dosageOptional')}</Text>
             <TextInput
               style={styles.input}
               value={dosage}
               onChangeText={setDosage}
-              placeholder="e.g. 500mg, 1 tablet"
+              placeholder={t('reminders.dosagePh')}
               placeholderTextColor={Colors.textLight}
             />
           </ScrollView>

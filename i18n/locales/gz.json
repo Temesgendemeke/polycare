@@ -169,7 +169,15 @@
     "emptyTitle": "ገና ምንም መዳኒት አልተጨመረም",
     "emptyHint": "የሕክምና እቅድህን ለመገንባት መዳኒት ጨምር የሚለውን ንካ።",
     "deleteTitle": "መዳኒት ሰርዝ",
-    "removeConfirm": "{name} ማስወገድ?"
+    "removeConfirm": "{name} ማስወገድ?",
+    "sampleMeds": "ናሙና መዳኒቶች",
+    "taken": "የተወሰደ",
+    "scheduled": "የታቀደ",
+    "doctorTitle": "የሐኪም ትእዛዝ",
+    "doctorSubtitle": "ሐኪም ያዘዘ - መጠን ሲወስዱ ምልክት አርጉ።",
+    "takeDose": "መጠን ውሰድ",
+    "completed": "ተጠናቋል",
+    "undo": "መልስ"
   },
   "reminders": {
     "title": "የመዳኒት ማስታወሾች",
@@ -222,7 +230,10 @@
     "wed": "ረቡዕ",
     "thu": "ሐሙስ",
     "fri": "ዓርብ",
-    "sat": "ቅዳሜ"
+    "sat": "ቅዳሜ",
+    "testScheduled": "የሙከራ ማስታወሻ ተይዟል! በ2 ሰከንድ ይደርሳል።",
+    "permissionRequired": "ፈቃድ ይፈልጋል",
+    "permissionMsg": "የማስታወሻ ፈቃድ አልተሰጠም። እባክዎ በመሣሪያ ቅንብር ማስታወሾች አብሩ።"
   },
   "exercise": {
     "title": "የእንቅስቃሴ እቅዶች",

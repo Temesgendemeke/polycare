@@ -511,7 +511,7 @@ export default function PatientHistoryScreen() {
           <Text style={[styles.inputLabel, { marginTop: 12 }]}>{t('history.dosesMissed')}</Text>
           <TextInput style={styles.input} value={dosesMissed} onChangeText={setDosesMissed} keyboardType="numeric" />
 
-          <Text style={[styles.inputLabel, { marginTop: 12 }]}>Reasons for missing doses</Text>
+          <Text style={[styles.inputLabel, { marginTop: 12 }]}>{t('history.missReasons')}</Text>
           <View style={styles.chipsWrap}>
             {['Forgot', 'Cost', 'Side effects', 'Medicine unavailable', 'Felt better', 'Felt worse'].map((r) => {
               const active = missReasons.includes(r);
@@ -535,10 +535,10 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>5</Text></View>
-            <Text style={styles.cardTitle}>Lifestyle Habits</Text>
+            <Text style={styles.cardTitle}>{t('history.lifestyle')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Smoking Status</Text>
+          <Text style={styles.inputLabel}>{t('history.smoking')}</Text>
           <View style={styles.pillRow}>
             {(['Never', 'Former smoker', 'Current smoker'] as const).map((s) => (
               <TouchableOpacity
@@ -551,7 +551,7 @@ export default function PatientHistoryScreen() {
             ))}
           </View>
 
-          <Text style={[styles.inputLabel, { marginTop: 12 }]}>Alcohol Intake</Text>
+          <Text style={[styles.inputLabel, { marginTop: 12 }]}>{t('history.alcohol')}</Text>
           <View style={styles.pillRow}>
             {(['Never', 'Occasionally', 'Daily'] as const).map((a) => (
               <TouchableOpacity
@@ -564,7 +564,7 @@ export default function PatientHistoryScreen() {
             ))}
           </View>
 
-          <Text style={[styles.inputLabel, { marginTop: 12 }]}>Exercise</Text>
+          <Text style={[styles.inputLabel, { marginTop: 12 }]}>{t('history.exercise')}</Text>
           <View style={styles.chipsWrap}>
             {['Walking', 'Jogging', 'Yoga', 'None'].map((ex) => {
               const active = exerciseTypes.includes(ex);
@@ -588,7 +588,7 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>6</Text></View>
-            <Text style={styles.cardTitle}>Family Medical History</Text>
+            <Text style={styles.cardTitle}>{t('history.familyHistory')}</Text>
           </View>
 
           {FAMILY_DISEASES.map((d) => {
@@ -626,23 +626,23 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>7</Text></View>
-            <Text style={styles.cardTitle}>Clinical Measurements</Text>
+            <Text style={styles.cardTitle}>{t('history.clinical')}</Text>
           </View>
 
           <View style={styles.row}>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Blood Pressure (mmHg)</Text>
+              <Text style={styles.inputLabel}>{t('history.bp')}</Text>
               <TextInput style={styles.input} value={bp} onChangeText={setBp} placeholder="124/82" />
             </View>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Heart Rate (bpm)</Text>
+              <Text style={styles.inputLabel}>{t('history.heartRate')}</Text>
               <TextInput style={styles.input} value={heartRate} onChangeText={setHeartRate} keyboardType="numeric" />
             </View>
           </View>
 
           <View style={styles.row}>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Weight (kg)</Text>
+              <Text style={styles.inputLabel}>{t('history.weight')}</Text>
               <TextInput
                 style={styles.input}
                 value={weight}
@@ -654,7 +654,7 @@ export default function PatientHistoryScreen() {
               />
             </View>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Height (cm)</Text>
+              <Text style={styles.inputLabel}>{t('history.height')}</Text>
               <TextInput
                 style={styles.input}
                 value={height}
@@ -669,11 +669,11 @@ export default function PatientHistoryScreen() {
 
           <View style={styles.row}>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>BMI (Auto-calculated)</Text>
+              <Text style={styles.inputLabel}>{t('history.bmi')}</Text>
               <TextInput style={[styles.input, styles.readOnlyInput]} value={`${bmi} kg/m²`} editable={false} />
             </View>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Fasting Blood Sugar</Text>
+              <Text style={styles.inputLabel}>{t('history.fastingSugar')}</Text>
               <TextInput style={styles.input} value={fbs} onChangeText={setFbs} placeholder="98 mg/dL" />
             </View>
           </View>
@@ -683,7 +683,7 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>8</Text></View>
-            <Text style={styles.cardTitle}>Laboratory Results</Text>
+            <Text style={styles.cardTitle}>{t('history.lab')}</Text>
           </View>
 
           {labRows.map((lab, i) => (
@@ -707,7 +707,7 @@ export default function PatientHistoryScreen() {
             }
           >
             <Ionicons name="add" size={16} color={Colors.primary} />
-            <Text style={styles.addRowBtnText}>Add Lab Result</Text>
+            <Text style={styles.addRowBtnText}>{t('history.addLab')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -715,7 +715,7 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>9</Text></View>
-            <Text style={styles.cardTitle}>Patient Consent & Sign-off</Text>
+            <Text style={styles.cardTitle}>{t('history.consentTitle')}</Text>
           </View>
 
           <TouchableOpacity
@@ -729,19 +729,19 @@ export default function PatientHistoryScreen() {
               color={consent ? Colors.primary : Colors.textLight}
             />
             <Text style={styles.consentText}>
-              I consent to the secure storage and use of my clinical records and health history within the Poly Care application.
+              {t('history.consentText')}
             </Text>
           </TouchableOpacity>
 
-          <Text style={[styles.inputLabel, { marginTop: 14 }]}>Digital Signature</Text>
-          <TextInput style={styles.input} value={signature} onChangeText={setSignature} placeholder="Type full name" />
+          <Text style={[styles.inputLabel, { marginTop: 14 }]}>{t('history.signature')}</Text>
+          <TextInput style={styles.input} value={signature} onChangeText={setSignature} placeholder={t('history.signaturePh')} />
 
-          <Text style={styles.inputLabel}>Date</Text>
+          <Text style={styles.inputLabel}>{t('history.date')}</Text>
           <TextInput style={styles.input} value={consentDate} onChangeText={setConsentDate} />
 
           <TouchableOpacity style={styles.saveBigBtn} onPress={handleSave}>
             <Ionicons name="save-outline" size={20} color={Colors.textOnPrimary} />
-            <Text style={styles.saveBigBtnText}>Save Patient History Form</Text>
+            <Text style={styles.saveBigBtnText}>{t('history.saveForm')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -763,7 +763,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backBtnText: { ...Typography.fontSize.sm, color: Colors.text, ...Typography.fontWeight.medium },
-  headerTitle: { ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
+  headerTitle: { flex: 1, textAlign: 'center', marginHorizontal: 8, ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
   saveHeaderBtn: { backgroundColor: Colors.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: BorderRadius.md },
   saveHeaderBtnText: { color: Colors.textOnPrimary, ...Typography.fontSize.sm, ...Typography.fontWeight.semibold },
   scrollBody: { padding: Spacing.md, paddingBottom: 110, gap: 14 },

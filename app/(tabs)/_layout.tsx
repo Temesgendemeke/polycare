@@ -43,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="medications"
         options={{
-          title: 'Meds',
+          title: t('tabs.meds'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="medkit" size={size} color={color} />
           ),
@@ -52,7 +52,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reminders"
         options={{
-          title: 'Reminders',
+          title: t('tabs.reminders'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="alarm" size={size} color={color} />
           ),
@@ -61,7 +61,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: 'Health',
+          title: t('tabs.health'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="fitness" size={size} color={color} />
           ),
@@ -70,7 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, Spacing, Typography, BorderRadius } from '../constants/design';
+import { useTranslation } from '../hooks';
 
 interface Props {
   adherenceRate: number;
@@ -10,12 +11,13 @@ interface Props {
 }
 
 export default function AdherenceCard({ adherenceRate, streak, longestStreak, missedDoses, totalDoses }: Props) {
+  const { t } = useTranslation();
   const color = adherenceRate >= 80 ? Colors.success : adherenceRate >= 50 ? Colors.accent : Colors.error;
   const strokeDasharray = `${(adherenceRate / 100) * 220} ${220 - (adherenceRate / 100) * 220}`;
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Adherence</Text>
+      <Text style={styles.title}>{t('adherence.title')}</Text>
       <View style={styles.ringContainer}>
         <View style={[styles.ring, { borderColor: color }]}>
           <Text style={[styles.percentage, { color }]}>{Math.round(adherenceRate)}%</Text>
@@ -24,22 +26,22 @@ export default function AdherenceCard({ adherenceRate, streak, longestStreak, mi
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: Colors.success }]}>{streak}</Text>
-          <Text style={styles.statLabel}>Day Streak</Text>
+          <Text style={styles.statLabel}>{t('adherence.streak')}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: Colors.primary }]}>{longestStreak}</Text>
-          <Text style={styles.statLabel}>Best Streak</Text>
+          <Text style={styles.statLabel}>{t('adherence.best')}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: Colors.error }]}>{missedDoses}</Text>
-          <Text style={styles.statLabel}>Missed</Text>
+          <Text style={styles.statLabel}>{t('adherence.missed')}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
           <Text style={[styles.statValue, { color: Colors.text }]}>{totalDoses}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statLabel}>{t('adherence.total')}</Text>
         </View>
       </View>
     </View>

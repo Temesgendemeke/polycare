@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../hooks';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/design';
 import { ExerciseService } from '../../services/exerciseService';
 import { DietService } from '../../services/dietService';
@@ -24,19 +25,20 @@ type Goal = {
   unit: string;
 };
 
-const initialHabits: Habit[] = [
-  { id: 'h1', name: 'Morning Walk', description: '30 minutes after breakfast', streak: 6, doneToday: false },
-  { id: 'h2', name: 'Low-salt Meal', description: 'Choose low sodium food options', streak: 4, doneToday: true },
-];
-
-const initialGoals: Goal[] = [
-  { id: 'g1', title: 'Weekly Exercise', current: 95, target: 150, unit: 'min' },
-  { id: 'g2', title: 'Water Intake', current: 1.5, target: 2.5, unit: 'L' },
-];
-
 const userConditions: NCDType[] = ['hypertension', 'diabetes'];
 
 export default function HabitsScreen() {
+  const { t } = useTranslation();
+  const initialHabits: Habit[] = [
+    { id: 'h1', name: t('habits.morningWalk'), description: t('habits.walkDesc'), streak: 6, doneToday: false },
+    { id: 'h2', name: t('habits.lowSalt'), description: t('habits.lowSaltDesc'), streak: 4, doneToday: true },
+  ];
+
+  const initialGoals: Goal[] = [
+    { id: 'g1', title: t('habits.weeklyExercise'), current: 95, target: 150, unit: 'min' },
+    { id: 'g2', title: t('habits.waterIntake'), current: 1.5, target: 2.5, unit: 'L' },
+  ];
+
   const [habits, setHabits] = useState<Habit[]>(initialHabits);
   const [showExercises, setShowExercises] = useState(false);
   const [showDiet, setShowDiet] = useState(false);
@@ -58,11 +60,11 @@ export default function HabitsScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerCard}>
-          <Text style={styles.title}>Habits & Goals</Text>
-          <Text style={styles.subtitle}>Small actions every day build long-term health.</Text>
+          <Text style={styles.title}>{t('habits.title')}</Text>
+          <Text style={styles.subtitle}>{t('habits.subtitle')}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Daily Habits</Text>
+        <Text style={styles.sectionTitle}>{t('habits.dailyHabits')}</Text>
         <View style={styles.sectionList}>
           {habits.map((habit) => (
             <View key={habit.id} style={styles.habitCard}>
@@ -71,7 +73,7 @@ export default function HabitsScreen() {
                 <Text style={styles.habitDescription}>{habit.description}</Text>
                 <View style={styles.streakRow}>
                   <Ionicons name="flame" size={14} color={Colors.accentDark} />
-                  <Text style={styles.streakText}>{habit.streak} day streak</Text>
+                  <Text style={styles.streakText}>{habit.streak} {t('habits.dayStreak')}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -85,7 +87,7 @@ export default function HabitsScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>Long-term Goals</Text>
+        <Text style={styles.sectionTitle}>{t('habits.longGoals')}</Text>
         <View style={styles.sectionList}>
           {initialGoals.map((goal) => {
             const progress = Math.min((goal.current / goal.target) * 100, 100);
@@ -109,7 +111,7 @@ export default function HabitsScreen() {
 
         <TouchableOpacity style={styles.expandableHeader} onPress={() => setShowExercises(!showExercises)}>
           <Ionicons name="fitness-outline" size={18} color={Colors.primary} />
-          <Text style={styles.expandableTitle}>Exercise Recommendations</Text>
+          <Text style={styles.expandableTitle}>{t('habits.exerciseRecs')}</Text>
           <Ionicons name={showExercises ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
         </TouchableOpacity>
 
@@ -125,7 +127,7 @@ export default function HabitsScreen() {
               ))}
             </View>
             <View style={styles.avoidSection}>
-              <Text style={styles.avoidTitle}>Avoid:</Text>
+              <Text style={styles.avoidTitle}>{t('habits.avoid')}</Text>
               {rec.avoided.map((item, j) => (
                 <Text key={j} style={styles.avoidText}>- {item}</Text>
               ))}
@@ -135,22 +137,22 @@ export default function HabitsScreen() {
 
         <TouchableOpacity style={styles.expandableHeader} onPress={() => setShowDiet(!showDiet)}>
           <Ionicons name="nutrition-outline" size={18} color={Colors.primary} />
-          <Text style={styles.expandableTitle}>Diet Recommendations</Text>
+          <Text style={styles.expandableTitle}>{t('habits.dietRecs')}</Text>
           <Ionicons name={showDiet ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textSecondary} />
         </TouchableOpacity>
 
         {showDiet && dietRecs.map((rec, i) => (
           <View key={i} style={styles.recSection}>
             <Text style={styles.recCondition}>{rec.condition.replace('_', ' ').toUpperCase()}</Text>
-            <Text style={styles.recSubtitle}>Recommended Foods</Text>
+            <Text style={styles.recSubtitle}>{t('habits.recFoods')}</Text>
             {rec.recommendedFoods.map((food, j) => (
               <Text key={j} style={styles.recListItem}>+ {food}</Text>
             ))}
-            <Text style={[styles.recSubtitle, { marginTop: 8 }]}>Foods to Avoid</Text>
+            <Text style={[styles.recSubtitle, { marginTop: 8 }]}>{t('habits.avoidFoods')}</Text>
             {rec.avoidedFoods.map((food, j) => (
               <Text key={j} style={[styles.recListItem, { color: Colors.error }]}>- {food}</Text>
             ))}
-            <Text style={[styles.recSubtitle, { marginTop: 8 }]}>Tips</Text>
+            <Text style={[styles.recSubtitle, { marginTop: 8 }]}>{t('habits.tips')}</Text>
             {rec.tips.map((tip, j) => (
               <View key={j} style={styles.tipRow}>
                 <Ionicons name="bulb-outline" size={13} color={Colors.accentDark} />

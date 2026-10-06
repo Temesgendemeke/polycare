@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
+import { useTranslation } from '../hooks';
 
 interface Pharmacy {
   id: string;
@@ -70,6 +71,7 @@ const PHARMACIES: Pharmacy[] = [
 
 export default function DrugLocatorScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('All');
 
@@ -94,7 +96,7 @@ export default function DrugLocatorScreen() {
 
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone.replace(/\s+/g, '')}`).catch(() => {
-      Alert.alert('Phone', `Contact number: ${phone}`);
+      Alert.alert(t('drugLocator.phoneTitle'), t('drugLocator.phoneMsg', { phone }));
     });
   };
 
@@ -104,9 +106,9 @@ export default function DrugLocatorScreen() {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={Colors.text} />
-          <Text style={styles.backBtnText}>Back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Drug Locator</Text>
+        <Text style={styles.headerTitle}>{t('locator.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -114,13 +116,13 @@ export default function DrugLocatorScreen() {
         {/* Map Visualization Card */}
         <View style={styles.mapCard}>
           <Ionicons name="map" size={32} color={Colors.primary} />
-          <Text style={styles.mapTitle}>Addis Ababa Pharmacy Network</Text>
+          <Text style={styles.mapTitle}>{t('drugLocator.network')}</Text>
           <Text style={styles.mapSub}>
-            Real-time stock verification for NCD chronic medications
+            {t('drugLocator.subtitle')}
           </Text>
           <View style={styles.mapBadge}>
             <Ionicons name="navigate" size={14} color={Colors.secondary} />
-            <Text style={styles.mapBadgeText}>GPS Radius: 5 km</Text>
+            <Text style={styles.mapBadgeText}>{t('drugLocator.radius')}</Text>
           </View>
         </View>
 
@@ -131,7 +133,7 @@ export default function DrugLocatorScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search by medicine or pharmacy name..."
+            placeholder={t('drugLocator.searchPh')}
             placeholderTextColor={Colors.textLight}
           />
           {searchQuery.length > 0 && (
@@ -159,7 +161,7 @@ export default function DrugLocatorScreen() {
         {/* Pharmacy Results Count */}
         <View style={styles.countRow}>
           <Text style={styles.countText}>
-            Showing {filteredPharmacies.length} verified pharmacies
+            {t('drugLocator.showing', { n: filteredPharmacies.length })}
           </Text>
         </View>
 
@@ -187,7 +189,7 @@ export default function DrugLocatorScreen() {
                     pharmacy.open ? styles.statusOpenText : styles.statusClosedText,
                   ]}
                 >
-                  {pharmacy.open ? 'OPEN' : 'CLOSED'}
+                  {pharmacy.open ? t('drugLocator.open') : t('drugLocator.closed')}
                 </Text>
               </View>
             </View>
@@ -212,20 +214,20 @@ export default function DrugLocatorScreen() {
                 onPress={() => handleCall(pharmacy.phone)}
               >
                 <Ionicons name="call-outline" size={16} color={Colors.primary} />
-                <Text style={styles.actionBtnText}>Call</Text>
+                <Text style={styles.actionBtnText}>{t('locator.call')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.actionBtn, styles.directionsBtn]}
                 onPress={() =>
                   Alert.alert(
-                    'Directions',
-                    `Navigating to ${pharmacy.name} (${pharmacy.distance} away).`
+                    t('drugLocator.directionsTitle'),
+                    t('drugLocator.directionsMsg', { name: pharmacy.name, distance: pharmacy.distance })
                   )
                 }
               >
                 <Ionicons name="navigate-outline" size={16} color={Colors.textOnPrimary} />
-                <Text style={styles.directionsBtnText}>Directions</Text>
+                <Text style={styles.directionsBtnText}>{t('locator.getDirections')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   backBtnText: { ...Typography.fontSize.sm, color: Colors.text, ...Typography.fontWeight.medium },
-  headerTitle: { ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
+  headerTitle: { flex: 1, textAlign: 'center', marginHorizontal: 8, ...Typography.fontSize.md, ...Typography.fontWeight.bold, color: Colors.text },
   scrollBody: { padding: Spacing.md, paddingBottom: 110, gap: 12 },
   mapCard: {
     backgroundColor: Colors.infoLight,
