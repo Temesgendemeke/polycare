@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 import { useUserStore } from '../store';
+import { useTranslation } from '../hooks';
 import { useEffect } from 'react';
 
 export default function Index() {
   const router = useRouter();
+  const { t } = useTranslation();
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
 
   useEffect(() => {
@@ -24,25 +26,25 @@ export default function Index() {
             <Image source={require('../assets/icon.png')} style={{ width: 80, height: 80 }} resizeMode="contain" />
           </View>
           <Text style={styles.appName}>PolyCare</Text>
-          <Text style={styles.tagline}>Smart care for NCD patients</Text>
+          <Text style={styles.tagline}>{t('auth.tagline')}</Text>
         </View>
 
         <View style={styles.features}>
           <View style={styles.featureRow}>
             <Ionicons name="medkit-outline" size={22} color={Colors.primary} />
-            <Text style={styles.featureText}>Track medications & reminders</Text>
+            <Text style={styles.featureText}>{t('auth.trackMeds')}</Text>
           </View>
           <View style={styles.featureRow}>
             <Ionicons name="chatbubble-ellipses" size={22} color={Colors.primary} />
-            <Text style={styles.featureText}>Consult with pharmacists</Text>
+            <Text style={styles.featureText}>{t('auth.consultPharmacists')}</Text>
           </View>
           <View style={styles.featureRow}>
             <Ionicons name="walk" size={22} color={Colors.primary} />
-            <Text style={styles.featureText}>Personalized exercise & diet</Text>
+            <Text style={styles.featureText}>{t('auth.personalDiet')}</Text>
           </View>
           <View style={styles.featureRow}>
             <Ionicons name="language" size={22} color={Colors.primary} />
-            <Text style={styles.featureText}>5 languages supported</Text>
+            <Text style={styles.featureText}>{t('auth.langsSupported')}</Text>
           </View>
         </View>
 
@@ -51,13 +53,13 @@ export default function Index() {
             style={styles.primaryButton}
             onPress={() => router.push('/login')}
           >
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Text style={styles.primaryButtonText}>{t('auth.signIn')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => router.push('/register')}
           >
-            <Text style={styles.secondaryButtonText}>Create Account</Text>
+            <Text style={styles.secondaryButtonText}>{t('auth.createAccount')}</Text>
           </TouchableOpacity>
         </View>
       </View>

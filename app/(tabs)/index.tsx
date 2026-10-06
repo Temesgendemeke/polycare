@@ -21,87 +21,87 @@ export default function HomeScreen() {
   const vitals = [
     {
       id: 'bp',
-      label: 'Blood Pressure',
+      label: t('dashboard.bloodPressure'),
       value: '124/82',
       unit: 'mmHg',
       icon: 'heart',
       color: Colors.error,
-      status: 'Normal',
+      status: t('dashboard.normal'),
     },
     {
       id: 'sugar',
-      label: 'Blood Sugar',
+      label: t('dashboard.bloodSugar'),
       value: '98',
       unit: 'mg/dL',
       icon: 'water',
       color: Colors.info,
-      status: 'Normal',
+      status: t('dashboard.normal'),
     },
     {
       id: 'weight',
-      label: 'Weight',
+      label: t('dashboard.weight'),
       value: '78.5',
       unit: 'kg',
       icon: 'barbell',
       color: Colors.accent,
-      status: 'Target: 75',
+      status: t('dashboard.targetWeight'),
     },
     {
       id: 'spo2',
-      label: 'SpO2 Level',
+      label: t('dashboard.spo2'),
       value: '98',
       unit: '%',
       icon: 'fitness',
       color: Colors.secondary,
-      status: 'Optimal',
+      status: t('dashboard.optimal'),
     },
   ];
 
   const featureCards = [
     {
       id: 'exercise',
-      title: 'Exercise & Diet',
-      subtitle: '3 smart programs',
+      title: t('dashboard.exerciseDiet'),
+      subtitle: t('dashboard.exerciseDietSub'),
       icon: 'walk',
       color: Colors.secondary,
       onPress: () => router.push('/(tabs)/habits'),
     },
     {
       id: 'consult',
-      title: 'Pharmacist',
-      subtitle: 'Talk to experts',
+      title: t('dashboard.pharmacist'),
+      subtitle: t('dashboard.pharmacistSub'),
       icon: 'chatbubble-ellipses',
       color: '#7C5FE6',
       onPress: () => router.push('/(tabs)/consultation'),
     },
     {
       id: 'drug-locator',
-      title: 'Drug Locator',
-      subtitle: 'Find nearby medicine',
+      title: t('dashboard.locator'),
+      subtitle: t('dashboard.locatorSub'),
       icon: 'location',
       color: Colors.info,
       onPress: () => router.push('/drug-locator'),
     },
     {
       id: 'education',
-      title: 'Education Hub',
-      subtitle: 'Multilingual & voice',
+      title: t('dashboard.education'),
+      subtitle: t('dashboard.educationSub'),
       icon: 'school',
       color: Colors.accent,
       onPress: () => router.push('/education'),
     },
     {
       id: 'reminders',
-      title: 'Reminders',
-      subtitle: 'Dosage alarms',
+      title: t('dashboard.reminders'),
+      subtitle: t('dashboard.remindersSub'),
       icon: 'alarm',
       color: Colors.primary,
       onPress: () => router.push('/(tabs)/reminders'),
     },
     {
       id: 'history',
-      title: 'History Form',
-      subtitle: 'NCD medical record',
+      title: t('dashboard.history'),
+      subtitle: t('dashboard.historySub'),
       icon: 'clipboard',
       color: '#0D9488',
       onPress: () => router.push('/history'),
@@ -122,7 +122,7 @@ export default function HomeScreen() {
             {/* Health Score Badge from index.html */}
             <View style={styles.healthScoreBadge}>
               <View>
-                <Text style={styles.healthScoreLabel}>Health Score</Text>
+                <Text style={styles.healthScoreLabel}>{t('dashboard.healthScore')}</Text>
                 <Text style={styles.healthScoreNum}>82</Text>
               </View>
               <Text style={styles.healthScoreTotal}>/ 100</Text>
@@ -130,34 +130,34 @@ export default function HomeScreen() {
           </View>
 
           <Text style={styles.welcomeText}>
-            Good Morning, {user?.name ? user.name.split(' ')[0] : 'Alex'} 👋
+            {t('dashboard.goodMorning')}, {user?.name ? user.name.split(' ')[0] : 'Alex'} 👋
           </Text>
           <Text style={styles.subtitleText}>
-            Smart. Personal. Complete care for NCD patients.
+            {t('dashboard.subtitle')}
           </Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{activeMedications.length}</Text>
-              <Text style={styles.statLabel}>Active Meds</Text>
+              <Text style={styles.statLabel}>{t('dashboard.activeMeds')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{highPriorityCount}</Text>
-              <Text style={styles.statLabel}>Daily Doses</Text>
+              <Text style={styles.statLabel}>{t('dashboard.dailyDoses')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>98%</Text>
-              <Text style={styles.statLabel}>Adherence Goal</Text>
+              <Text style={styles.statLabel}>{t('dashboard.adherenceGoal')}</Text>
             </View>
           </View>
         </View>
 
         {/* Vitals Grid from index.html */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recorded Vitals</Text>
-          <Text style={styles.sectionHint}>Latest clinical check</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.recordedVitals')}</Text>
+          <Text style={styles.sectionHint}>{t('dashboard.latestCheck')}</Text>
         </View>
 
         <View style={styles.vitalsGrid}>
@@ -178,8 +178,8 @@ export default function HomeScreen() {
 
         {/* Health Features Grid from index.html */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Health Features</Text>
-          <Text style={styles.sectionHint}>Personalized care</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.features')}</Text>
+          <Text style={styles.sectionHint}>{t('dashboard.personalizedCare')}</Text>
         </View>
 
         <View style={styles.actionsGrid}>
@@ -204,7 +204,7 @@ export default function HomeScreen() {
 
         {/* Today's Focus Card */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Today's Focus</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.todaysFocus')}</Text>
         </View>
 
         <View style={styles.focusCard}>

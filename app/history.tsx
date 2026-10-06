@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 import { useUserStore } from '../store';
+import { useTranslation } from '../hooks';
 
 const STORAGE_KEY = '@polycare_patient_history_v1';
 
@@ -62,6 +63,7 @@ interface AppointmentRow {
 
 export default function PatientHistoryScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const user = useUserStore((s) => s.user);
 
   // Section 1: Personal
@@ -213,7 +215,7 @@ export default function PatientHistoryScreen() {
 
   const handleSave = async () => {
     if (!consent) {
-      Alert.alert('Consent Required', 'Please confirm your consent to securely store your health record.');
+      Alert.alert(t('history.consentRequired'), t('history.consentMsg'));
       return;
     }
 
@@ -272,11 +274,11 @@ export default function PatientHistoryScreen() {
 
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-      Alert.alert('Success', 'Patient History Form saved securely!', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert(t('common.success'), t('history.savedMsg'), [
+        { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } catch (e) {
-      Alert.alert('Error', 'Failed to save record locally.');
+      Alert.alert(t('common.error'), t('history.saveFailed'));
     }
   };
 
@@ -286,11 +288,11 @@ export default function PatientHistoryScreen() {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={Colors.text} />
-          <Text style={styles.backBtnText}>Back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Patient History Form</Text>
+        <Text style={styles.headerTitle}>{t('history.title')}</Text>
         <TouchableOpacity style={styles.saveHeaderBtn} onPress={handleSave}>
-          <Text style={styles.saveHeaderBtnText}>Save</Text>
+          <Text style={styles.saveHeaderBtnText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -299,9 +301,9 @@ export default function PatientHistoryScreen() {
         <View style={styles.infoBanner}>
           <Ionicons name="shield-checkmark" size={24} color={Colors.primary} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.bannerTitle}>Comprehensive NCD Health Record</Text>
+            <Text style={styles.bannerTitle}>{t('history.subtitle')}</Text>
             <Text style={styles.bannerSub}>
-              Accurate details help clinicians tailor personalized medication therapy and monitor interactions.
+              {t('history.desc')}
             </Text>
           </View>
         </View>
@@ -310,18 +312,18 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>1</Text></View>
-            <Text style={styles.cardTitle}>Personal Information</Text>
+            <Text style={styles.cardTitle}>{t('history.personalInfo')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Patient ID</Text>
+          <Text style={styles.inputLabel}>{t('history.patientId')}</Text>
           <TextInput style={styles.input} value={patientId} onChangeText={setPatientId} placeholder="PC-000123" />
 
-          <Text style={styles.inputLabel}>Full Name *</Text>
+          <Text style={styles.inputLabel}>{t('history.fullName')}</Text>
           <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholder="e.g. Abebe Kebede" />
 
           <View style={styles.row}>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Gender</Text>
+              <Text style={styles.inputLabel}>{t('history.gender')}</Text>
               <View style={styles.pillRow}>
                 {(['Male', 'Female'] as const).map((g) => (
                   <TouchableOpacity
@@ -329,33 +331,33 @@ export default function PatientHistoryScreen() {
                     style={[styles.pill, gender === g && styles.pillActive]}
                     onPress={() => setGender(g)}
                   >
-                    <Text style={[styles.pillText, gender === g && styles.pillTextActive]}>{g}</Text>
+                    <Text style={[styles.pillText, gender === g && styles.pillTextActive]}>{g === 'Male' ? t('history.male') : t('history.female')}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Age</Text>
+              <Text style={styles.inputLabel}>{t('history.age')}</Text>
               <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" placeholder="54" />
             </View>
           </View>
 
-          <Text style={styles.inputLabel}>Phone Number</Text>
+          <Text style={styles.inputLabel}>{t('history.phone')}</Text>
           <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
 
-          <Text style={styles.inputLabel}>Email Address</Text>
+          <Text style={styles.inputLabel}>{t('history.email')}</Text>
           <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" />
 
-          <Text style={styles.inputLabel}>Address</Text>
+          <Text style={styles.inputLabel}>{t('history.address')}</Text>
           <TextInput style={styles.input} value={address} onChangeText={setAddress} />
 
           <View style={styles.row}>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Emergency Contact</Text>
+              <Text style={styles.inputLabel}>{t('history.emergencyContact')}</Text>
               <TextInput style={styles.input} value={emergencyContact} onChangeText={setEmergencyContact} />
             </View>
             <View style={styles.halfCol}>
-              <Text style={styles.inputLabel}>Emergency Phone</Text>
+              <Text style={styles.inputLabel}>{t('history.emergencyPhone')}</Text>
               <TextInput style={styles.input} value={emergencyPhone} onChangeText={setEmergencyPhone} keyboardType="phone-pad" />
             </View>
           </View>
@@ -365,10 +367,10 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>2</Text></View>
-            <Text style={styles.cardTitle}>Medical History & Diagnoses</Text>
+            <Text style={styles.cardTitle}>{t('history.medicalHistory')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Chronic Conditions</Text>
+          <Text style={styles.inputLabel}>{t('history.chronicConditions')}</Text>
           <View style={styles.chipsWrap}>
             {CHRONIC_DISEASES.map((dis) => {
               const active = chronic.includes(dis);
@@ -408,7 +410,7 @@ export default function PatientHistoryScreen() {
           </View>
 
           {/* Hospital Admissions Table */}
-          <Text style={[styles.inputLabel, { marginTop: 16 }]}>Previous Hospital Admissions</Text>
+          <Text style={[styles.inputLabel, { marginTop: 16 }]}>{t('history.prevAdmissions')}</Text>
           {admissions.map((adm, i) => (
             <View key={adm.id} style={styles.tableRowCard}>
               <View style={{ flex: 1 }}>
@@ -430,7 +432,7 @@ export default function PatientHistoryScreen() {
             }
           >
             <Ionicons name="add" size={16} color={Colors.primary} />
-            <Text style={styles.addRowBtnText}>Add Admission</Text>
+            <Text style={styles.addRowBtnText}>{t('history.addAdmission')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -438,10 +440,10 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>3</Text></View>
-            <Text style={styles.cardTitle}>Medication History</Text>
+            <Text style={styles.cardTitle}>{t('history.medHistory')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Current Prescriptions</Text>
+          <Text style={styles.inputLabel}>{t('history.currentRx')}</Text>
           {medRows.map((med, i) => (
             <View key={med.id} style={styles.tableRowCard}>
               <View style={{ flex: 1 }}>
@@ -463,10 +465,10 @@ export default function PatientHistoryScreen() {
             }
           >
             <Ionicons name="add" size={16} color={Colors.primary} />
-            <Text style={styles.addRowBtnText}>Add Medication</Text>
+            <Text style={styles.addRowBtnText}>{t('history.addMedication')}</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.inputLabel, { marginTop: 16 }]}>Medication Allergies</Text>
+          <Text style={[styles.inputLabel, { marginTop: 16 }]}>{t('history.medAllergies')}</Text>
           <View style={styles.chipsWrap}>
             {['None', 'Penicillin', 'Sulfa drugs', 'Aspirin'].map((item) => {
               const active = allergies.includes(item);
@@ -490,10 +492,10 @@ export default function PatientHistoryScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.numBadge}><Text style={styles.numBadgeText}>4</Text></View>
-            <Text style={styles.cardTitle}>Medication Adherence</Text>
+            <Text style={styles.cardTitle}>{t('history.adherence')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Do you sometimes forget to take your medicines?</Text>
+          <Text style={styles.inputLabel}>{t('history.forgetQ')}</Text>
           <View style={styles.pillRow}>
             {(['Yes', 'No'] as const).map((opt) => (
               <TouchableOpacity
@@ -501,12 +503,12 @@ export default function PatientHistoryScreen() {
                 style={[styles.pill, forgetMeds === opt && styles.pillActive]}
                 onPress={() => setForgetMeds(opt)}
               >
-                <Text style={[styles.pillText, forgetMeds === opt && styles.pillTextActive]}>{opt}</Text>
+                <Text style={[styles.pillText, forgetMeds === opt && styles.pillTextActive]}>{opt === 'Yes' ? t('history.yes') : t('history.no')}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={[styles.inputLabel, { marginTop: 12 }]}>Doses missed this past week</Text>
+          <Text style={[styles.inputLabel, { marginTop: 12 }]}>{t('history.dosesMissed')}</Text>
           <TextInput style={styles.input} value={dosesMissed} onChangeText={setDosesMissed} keyboardType="numeric" />
 
           <Text style={[styles.inputLabel, { marginTop: 12 }]}>Reasons for missing doses</Text>

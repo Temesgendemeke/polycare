@@ -4,10 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../store';
+import { useTranslation } from '../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { login, isLoading, error } = useUserStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,9 +18,9 @@ export default function LoginScreen() {
 
   const validate = () => {
     const errors: typeof fieldErrors = {};
-    if (!email.trim()) errors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) errors.email = 'Invalid email format';
-    if (!password) errors.password = 'Password is required';
+    if (!email.trim()) errors.email = t('auth.emailRequired');
+    else if (!/\S+@\S+\.\S+/.test(email)) errors.email = t('auth.invalidEmail');
+    if (!password) errors.password = t('auth.passwordRequired');
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -42,22 +44,22 @@ export default function LoginScreen() {
                 <Image source={require('../assets/icon.png')} style={{ width: 72, height: 72 }} resizeMode="contain" />
               </View>
               <Text style={styles.appName}>PolyCare</Text>
-              <Text style={styles.tagline}>Your health, simplified</Text>
+              <Text style={styles.tagline}>{t('auth.yourHealth')}</Text>
             </View>
           </View>
 
           <View style={styles.formCard}>
-            <Text style={styles.welcomeBack}>Welcome Back</Text>
-            <Text style={styles.formSubtitle}>Sign in to continue managing your medications</Text>
+            <Text style={styles.welcomeBack}>{t('auth.welcomeBack')}</Text>
+            <Text style={styles.formSubtitle}>{t('auth.signInSubtitle')}</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t('auth.email')}</Text>
               <View style={[styles.inputWrapper, fieldErrors.email ? styles.inputError : undefined]}>
                 <Ionicons name="mail-outline" size={18} color={fieldErrors.email ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   value={email}
                   onChangeText={(v) => { setEmail(v); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
-                  placeholder="your@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   placeholderTextColor={Colors.textLight}
                   style={styles.input}
                   keyboardType="email-address"
@@ -69,13 +71,13 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <Text style={styles.inputLabel}>{t('auth.password')}</Text>
               <View style={[styles.inputWrapper, fieldErrors.password ? styles.inputError : undefined]}>
                 <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.password ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   value={password}
                   onChangeText={(v) => { setPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.passwordPlaceholder')}
                   placeholderTextColor={Colors.textLight}
                   style={styles.input}
                   secureTextEntry={!showPassword}
@@ -105,7 +107,7 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  <Text style={styles.primaryButtonText}>Sign In</Text>
+                  <Text style={styles.primaryButtonText}>{t('auth.signIn')}</Text>
                   <Ionicons name="arrow-forward" size={18} color="#fff" />
                 </>
               )}
@@ -113,7 +115,7 @@ export default function LoginScreen() {
 
             <View style={styles.dividerRow}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>{t('auth.or')}</Text>
               <View style={styles.divider} />
             </View>
 

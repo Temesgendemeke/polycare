@@ -13,28 +13,28 @@ export default function ConsultationScreen() {
   const handleBook = (pharmacist: Pharmacist) => {
     if (pharmacist.available) {
       Alert.alert(
-        'Confirm Consultation',
-        `Would you like to book a clinical consultation with ${pharmacist.name}?\n\nNext available slot: ${pharmacist.nextSlot || 'Today'}`,
+        t('consultation.confirmTitle'),
+        t('consultation.confirmMsg', { name: pharmacist.name }) + '\n\n' + t('consultation.nextSlot', { slot: pharmacist.nextSlot || t('consultation.availableSoon') }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Confirm Booking',
+            text: t('common.confirmBooking'),
             onPress: () => {
-              Alert.alert('Booking Confirmed', `Your appointment with ${pharmacist.name} has been scheduled for ${pharmacist.nextSlot}.`);
+              Alert.alert(t('consultation.bookingConfirmed'), t('consultation.bookingMsg', { name: pharmacist.name, slot: pharmacist.nextSlot || t('consultation.availableSoon') }));
             },
           },
         ]
       );
     } else {
       Alert.alert(
-        'Notify on Availability',
-        `${pharmacist.name} is currently offline. Would you like to receive an alert when their next slot opens (${pharmacist.nextSlot})?`,
+        t('consultation.notifyTitle'),
+        t('consultation.notifyMsg', { name: pharmacist.name, slot: pharmacist.nextSlot || t('consultation.availableSoon') }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Notify Me',
+            text: t('common.notifyMe'),
             onPress: () => {
-              Alert.alert('Reminder Set', `We will notify you when ${pharmacist.name} is available.`);
+              Alert.alert(t('consultation.reminderSet'), t('consultation.reminderMsg', { name: pharmacist.name }));
             },
           },
         ]
@@ -47,12 +47,12 @@ export default function ConsultationScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.headerCard}>
           <Text style={styles.title}>{t('consultation.title')}</Text>
-          <Text style={styles.subtitle}>Direct consultation with certified clinical pharmacists for chronic NCD therapy review.</Text>
+          <Text style={styles.subtitle}>{t('consultation.subtitle')}</Text>
 
           <View style={styles.ctaRow}>
             <TouchableOpacity
               style={[styles.ctaButton, styles.chatButton]}
-              onPress={() => Alert.alert('Instant Consultation', 'Connecting you to the next available clinical pharmacist...')}
+              onPress={() => Alert.alert(t('consultation.instantTitle'), t('consultation.instantMsg'))}
               activeOpacity={0.8}
             >
               <Ionicons name="chatbubbles" size={18} color={Colors.textOnPrimary} />
@@ -61,7 +61,7 @@ export default function ConsultationScreen() {
 
             <TouchableOpacity
               style={[styles.ctaButton, styles.videoButton]}
-              onPress={() => Alert.alert('Video Consultation', 'Schedule a live video review with an NCD pharmacotherapy specialist.')}
+              onPress={() => Alert.alert(t('consultation.videoTitle'), t('consultation.videoMsg'))}
               activeOpacity={0.8}
             >
               <Ionicons name="videocam" size={18} color={Colors.textOnPrimary} />
@@ -72,12 +72,12 @@ export default function ConsultationScreen() {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionTitle}>Clinical Pharmacists</Text>
-            <Text style={styles.sectionSubtext}>Expert guidance on dosage, interactions & lifestyle</Text>
+            <Text style={styles.sectionTitle}>{t('consultation.clinicalPharmacists')}</Text>
+            <Text style={styles.sectionSubtext}>{t('consultation.expertGuidance')}</Text>
           </View>
           <View style={styles.onlineCountBadge}>
             <View style={styles.onlineDot} />
-            <Text style={styles.onlineCountText}>{pharmacists.filter((p) => p.available).length} Online</Text>
+            <Text style={styles.onlineCountText}>{pharmacists.filter((p) => p.available).length} {t('consultation.online')}</Text>
           </View>
         </View>
 
@@ -109,7 +109,7 @@ export default function ConsultationScreen() {
             <View style={styles.cardBottomRow}>
               <View style={styles.slotWrap}>
                 <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.slotText}>{pharmacist.nextSlot || 'Available soon'}</Text>
+                <Text style={styles.slotText}>{pharmacist.nextSlot || t('consultation.availableSoon')}</Text>
               </View>
 
               <TouchableOpacity
@@ -118,7 +118,7 @@ export default function ConsultationScreen() {
                 activeOpacity={0.8}
               >
                 <Text style={[styles.bookBtnText, pharmacist.available ? styles.bookBtnTextActive : styles.bookBtnTextDisabled]}>
-                  {pharmacist.available ? 'Book Consultation' : 'Notify Me'}
+                  {pharmacist.available ? t('consultation.bookConsult') : t('common.notifyMe')}
                 </Text>
               </TouchableOpacity>
             </View>

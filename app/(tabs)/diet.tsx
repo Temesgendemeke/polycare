@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, TextInput, Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from '../../hooks';
 import { dietApi } from '../../lib/api/diet';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 
