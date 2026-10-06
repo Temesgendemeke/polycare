@@ -79,18 +79,18 @@ export default function RegisterScreen() {
               <>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Full Name *</Text>
-                  <View style={[styles.inputWrapper, fieldErrors.name && styles.inputError]}>
+                  <View style={[styles.inputWrapper, fieldErrors.name ? styles.inputError : undefined]}>
                     <Ionicons name="person-outline" size={18} color={fieldErrors.name ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={name} onChangeText={(v) => { setName(v); setFieldErrors((p) => ({ ...p, name: undefined })); }} placeholder="Your full name" placeholderTextColor={Colors.textLight} style={styles.input} autoCapitalize="words" />
+                    <TextInput value={name} onChangeText={(v) => { setName(v); setFieldErrors((p) => { const n = { ...p }; delete n.name; return n; }); }} placeholder="Your full name" placeholderTextColor={Colors.textLight} style={styles.input} autoCapitalize="words" />
                   </View>
                   {fieldErrors.name && <Text style={styles.fieldError}>{fieldErrors.name}</Text>}
                 </View>
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Email</Text>
-                  <View style={[styles.inputWrapper, fieldErrors.email && styles.inputError]}>
+                  <View style={[styles.inputWrapper, fieldErrors.email ? styles.inputError : undefined]}>
                     <Ionicons name="mail-outline" size={18} color={fieldErrors.email ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={email} onChangeText={(v) => { setEmail(v); setFieldErrors((p) => ({ ...p, email: undefined })); }} placeholder="your@email.com" placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
+                    <TextInput value={email} onChangeText={(v) => { setEmail(v); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n; }); }} placeholder="your@email.com" placeholderTextColor={Colors.textLight} style={styles.input} keyboardType="email-address" autoCapitalize="none" />
                   </View>
                   {fieldErrors.email && <Text style={styles.fieldError}>{fieldErrors.email}</Text>}
                 </View>
@@ -107,9 +107,9 @@ export default function RegisterScreen() {
               <>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Password *</Text>
-                  <View style={[styles.inputWrapper, fieldErrors.password && styles.inputError]}>
+                  <View style={[styles.inputWrapper, fieldErrors.password ? styles.inputError : undefined]}>
                     <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.password ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={password} onChangeText={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }} placeholder="At least 6 characters" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
+                    <TextInput value={password} onChangeText={(v) => { setPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n; }); }} placeholder="At least 6 characters" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
                       <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={Colors.textSecondary} />
                     </TouchableOpacity>
@@ -119,9 +119,9 @@ export default function RegisterScreen() {
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Confirm Password *</Text>
-                  <View style={[styles.inputWrapper, fieldErrors.confirmPassword && styles.inputError]}>
+                  <View style={[styles.inputWrapper, fieldErrors.confirmPassword ? styles.inputError : undefined]}>
                     <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.confirmPassword ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
-                    <TextInput value={confirmPassword} onChangeText={(v) => { setConfirmPassword(v); setFieldErrors((p) => ({ ...p, confirmPassword: undefined })); }} placeholder="Re-enter password" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
+                    <TextInput value={confirmPassword} onChangeText={(v) => { setConfirmPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.confirmPassword; return n; }); }} placeholder="Re-enter password" placeholderTextColor={Colors.textLight} style={styles.input} secureTextEntry={!showPassword} autoCapitalize="none" />
                   </View>
                   {fieldErrors.confirmPassword && <Text style={styles.fieldError}>{fieldErrors.confirmPassword}</Text>}
                 </View>

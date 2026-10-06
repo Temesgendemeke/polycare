@@ -35,6 +35,8 @@ export interface Pharmacist {
   name: string;
   licenseNumber: string;
   specialization?: string;
+  experience?: string;
   rating?: number;
   available: boolean;
+  nextSlot?: string;
 }

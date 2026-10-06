@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useMedicationStore } from '../store';
+import { useMedicationStore, useReminderStore } from '../store';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/design';
 import { Medication, DoseUnit, Frequency } from '../types';
 
@@ -20,6 +20,7 @@ const FREQUENCIES: Frequency[] = [
 export default function AddMedicationModal({ visible, onClose, editMedication }: Props) {
   const addMedication = useMedicationStore((s) => s.addMedication);
   const updateMedication = useMedicationStore((s) => s.updateMedication);
+  const addReminder = useReminderStore((s) => s.addReminder);
 
   const [name, setName] = useState(editMedication?.name || '');
   const [genericName, setGenericName] = useState(editMedication?.genericName || '');
@@ -61,6 +62,35 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
       updateMedication(med.id, med);
     } else {
       addMedication(med);
+
+      // Automatically generate active reminders based on medication frequency
+      const defaultTimesForFreq: Record<string, string[]> = {
+        once_daily: ['08:00'],
+        twice_daily: ['08:00', '20:00'],
+        three_times_daily: ['08:00', '14:00', '20:00'],
+        four_times_daily: ['08:00', '12:00', '16:00', '20:00'],
+        every_8_hours: ['08:00', '16:00', '00:00'],
+        every_12_hours: ['08:00', '20:00'],
+        every_24_hours: ['08:00'],
+        weekly: ['09:00'],
+      };
+
+      const scheduledTimes = defaultTimesForFreq[frequency] || ['08:00'];
+      scheduledTimes.forEach((time, index) => {
+        addReminder(
+          {
+            id: `${med.id}-rem-${index}-${Date.now()}`,
+            medicationId: med.id,
+            title: med.name,
+            time,
+            days: frequency === 'weekly' ? [1] : [0, 1, 2, 3, 4, 5, 6],
+            enabled: true,
+            dosage: `${med.dosage} ${med.unit}`,
+            instructions: med.instructions,
+          },
+          med.name
+        );
+      });
     }
     reset();
     onClose();

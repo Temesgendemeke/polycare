@@ -1,6 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+const getBaseUrl = () => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl) {
+    if (Platform.OS === 'android' && envUrl.includes('localhost')) {
+      return envUrl.replace('localhost', '10.0.2.2');
+    }
+    return envUrl;
+  }
+  return Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getBaseUrl();
 
 let authToken: string | null = null;
 

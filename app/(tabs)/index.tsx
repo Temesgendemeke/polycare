@@ -2,13 +2,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMedicationStore } from '../../store';
+import { useMedicationStore, useUserStore } from '../../store';
 import { useTranslation } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const user = useUserStore((s) => s.user);
   const { medications } = useMedicationStore();
 
   const safeMedications = Array.isArray(medications) ? medications : [];
@@ -17,19 +18,58 @@ export default function HomeScreen() {
     String(m?.frequency ?? '').toLowerCase().includes('day')
   ).length;
 
-  const quickCards = [
+  const vitals = [
+    {
+      id: 'bp',
+      label: 'Blood Pressure',
+      value: '124/82',
+      unit: 'mmHg',
+      icon: 'heart',
+      color: Colors.error,
+      status: 'Normal',
+    },
+    {
+      id: 'sugar',
+      label: 'Blood Sugar',
+      value: '98',
+      unit: 'mg/dL',
+      icon: 'water',
+      color: Colors.info,
+      status: 'Normal',
+    },
+    {
+      id: 'weight',
+      label: 'Weight',
+      value: '78.5',
+      unit: 'kg',
+      icon: 'barbell',
+      color: Colors.accent,
+      status: 'Target: 75',
+    },
+    {
+      id: 'spo2',
+      label: 'SpO2 Level',
+      value: '98',
+      unit: '%',
+      icon: 'fitness',
+      color: Colors.secondary,
+      status: 'Optimal',
+    },
+  ];
+
+  const featureCards = [
     {
       id: 'exercise',
       title: 'Exercise & Diet',
-      subtitle: 'Personalized habits',
+      subtitle: '3 smart programs',
       icon: 'walk',
       color: Colors.secondary,
       onPress: () => router.push('/(tabs)/habits'),
     },
     {
       id: 'consult',
-      title: 'Clinical Consult',
-      subtitle: 'Talk to a pharmacist',
+      title: 'Pharmacist',
+      subtitle: 'Talk to experts',
       icon: 'chatbubble-ellipses',
       color: '#7C5FE6',
       onPress: () => router.push('/(tabs)/consultation'),
@@ -40,34 +80,61 @@ export default function HomeScreen() {
       subtitle: 'Find nearby medicine',
       icon: 'location',
       color: Colors.info,
-      onPress: () => router.push('/(tabs)/consultation'),
+      onPress: () => router.push('/drug-locator'),
     },
     {
       id: 'education',
-      title: 'Smart Education',
-      subtitle: 'Voice-friendly guidance',
-      icon: 'megaphone',
+      title: 'Education Hub',
+      subtitle: 'Multilingual & voice',
+      icon: 'school',
       color: Colors.accent,
-      onPress: () => router.push('/(tabs)/profile'),
+      onPress: () => router.push('/education'),
+    },
+    {
+      id: 'reminders',
+      title: 'Reminders',
+      subtitle: 'Dosage alarms',
+      icon: 'alarm',
+      color: Colors.primary,
+      onPress: () => router.push('/(tabs)/reminders'),
+    },
+    {
+      id: 'history',
+      title: 'History Form',
+      subtitle: 'NCD medical record',
+      icon: 'clipboard',
+      color: '#0D9488',
+      onPress: () => router.push('/history'),
     },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <View style={styles.brandPill}>
               <Ionicons name="star" size={14} color={Colors.primary} />
-              <Text style={styles.brandPillText}>POLY CARE</Text>
+              <Text style={styles.brandPillText}>POLY CARE HEALTH</Text>
             </View>
-            <TouchableOpacity style={styles.notifyButton}>
-              <Ionicons name="notifications-outline" size={20} color={Colors.primary} />
-            </TouchableOpacity>
+
+            {/* Health Score Badge from index.html */}
+            <View style={styles.healthScoreBadge}>
+              <View>
+                <Text style={styles.healthScoreLabel}>Health Score</Text>
+                <Text style={styles.healthScoreNum}>82</Text>
+              </View>
+              <Text style={styles.healthScoreTotal}>/ 100</Text>
+            </View>
           </View>
 
-          <Text style={styles.welcomeText}>{t('home.welcome')}</Text>
-          <Text style={styles.subtitleText}>Smart. Personal. Complete care for NCD patients.</Text>
+          <Text style={styles.welcomeText}>
+            Good Morning, {user?.name ? user.name.split(' ')[0] : 'Alex'} 👋
+          </Text>
+          <Text style={styles.subtitleText}>
+            Smart. Personal. Complete care for NCD patients.
+          </Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -87,16 +154,47 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Vitals Grid from index.html */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
-          <Text style={styles.sectionHint}>Personalized tools</Text>
+          <Text style={styles.sectionTitle}>Recorded Vitals</Text>
+          <Text style={styles.sectionHint}>Latest clinical check</Text>
+        </View>
+
+        <View style={styles.vitalsGrid}>
+          {vitals.map((v) => (
+            <View key={v.id} style={styles.vitalCard}>
+              <View style={[styles.vitalIconWrap, { backgroundColor: v.color + '15' }]}>
+                <Ionicons name={v.icon as any} size={18} color={v.color} />
+              </View>
+              <View style={styles.vitalValueRow}>
+                <Text style={styles.vitalValue}>{v.value}</Text>
+                <Text style={styles.vitalUnit}>{v.unit}</Text>
+              </View>
+              <Text style={styles.vitalLabel}>{v.label}</Text>
+              <Text style={[styles.vitalStatus, { color: v.color }]}>{v.status}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Health Features Grid from index.html */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Your Health Features</Text>
+          <Text style={styles.sectionHint}>Personalized care</Text>
         </View>
 
         <View style={styles.actionsGrid}>
-          {quickCards.map((card) => (
-            <TouchableOpacity key={card.id} style={styles.actionCard} onPress={card.onPress} activeOpacity={0.9}>
-              <View style={[styles.actionIconWrap, { backgroundColor: card.color }]}>
-                <Ionicons name={card.icon as any} size={20} color={Colors.textOnPrimary} />
+          {featureCards.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={styles.actionCard}
+              onPress={card.onPress}
+              activeOpacity={0.85}
+            >
+              <View style={styles.actionTop}>
+                <View style={[styles.actionIconWrap, { backgroundColor: card.color }]}>
+                  <Ionicons name={card.icon as any} size={18} color={Colors.textOnPrimary} />
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={Colors.textLight} />
               </View>
               <Text style={styles.actionTitle}>{card.title}</Text>
               <Text style={styles.actionSubtitle}>{card.subtitle}</Text>
@@ -104,6 +202,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
+        {/* Today's Focus Card */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Today's Focus</Text>
         </View>
@@ -115,14 +214,20 @@ export default function HomeScreen() {
             </View>
             <View style={styles.focusTextWrap}>
               <Text style={styles.focusTitle}>{t('home.todayReminders')}</Text>
-              <Text style={styles.focusSubtitle}>Keep your medication timing consistent for better control.</Text>
+              <Text style={styles.focusSubtitle}>
+                Keep your medication timing consistent for better control.
+              </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.focusButton} onPress={() => router.push('/(tabs)/reminders')}>
+          <TouchableOpacity
+            style={styles.focusButton}
+            onPress={() => router.push('/(tabs)/reminders')}
+          >
             <Text style={styles.focusButtonText}>Open Reminders</Text>
           </TouchableOpacity>
         </View>
 
+        {/* Current Medications */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Current Medications</Text>
           <TouchableOpacity onPress={() => router.push('/(tabs)/medications')}>
@@ -134,7 +239,9 @@ export default function HomeScreen() {
           <View style={styles.emptyCard}>
             <Ionicons name="medkit-outline" size={26} color={Colors.textLight} />
             <Text style={styles.emptyTitle}>No medications yet</Text>
-            <Text style={styles.emptySubtext}>Add your first medication to start reminders and tracking.</Text>
+            <Text style={styles.emptySubtext}>
+              Add your first medication to start reminders and tracking.
+            </Text>
           </View>
         ) : (
           activeMedications.slice(0, 3).map((medication) => (
@@ -192,13 +299,32 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     letterSpacing: 0.3,
   },
-  notifyButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
+  healthScoreBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: '#255CB9',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#4A80D8',
+  },
+  healthScoreLabel: {
+    fontSize: 9,
+    color: '#DCE8FD',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  healthScoreNum: {
+    ...Typography.fontSize.md,
+    ...Typography.fontWeight.bold,
+    color: '#FFF',
+    lineHeight: 18,
+  },
+  healthScoreTotal: {
+    ...Typography.fontSize.xs,
+    color: '#DCE8FD',
   },
   welcomeText: {
     ...Typography.fontSize.xxl,
@@ -254,21 +380,75 @@ const styles = StyleSheet.create({
     ...Typography.fontSize.sm,
     color: Colors.textSecondary,
   },
+  vitalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.lg,
+    gap: 10,
+  },
+  vitalCard: {
+    width: '48%',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm,
+  },
+  vitalIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  vitalValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  vitalValue: {
+    ...Typography.fontSize.lg,
+    ...Typography.fontWeight.bold,
+    color: Colors.text,
+  },
+  vitalUnit: {
+    ...Typography.fontSize.xs,
+    color: Colors.textSecondary,
+  },
+  vitalLabel: {
+    ...Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  vitalStatus: {
+    ...Typography.fontSize.xs,
+    ...Typography.fontWeight.semibold,
+    marginTop: 4,
+  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: Spacing.lg,
+    gap: 10,
   },
   actionCard: {
     width: '48%',
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.md,
-    marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
     ...Shadows.sm,
+  },
+  actionTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
   actionIconWrap: {
     width: 34,
@@ -276,25 +456,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
   },
   actionTitle: {
     ...Typography.fontSize.md,
     ...Typography.fontWeight.semibold,
     color: Colors.text,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   actionSubtitle: {
-    ...Typography.fontSize.sm,
+    ...Typography.fontSize.xs,
     color: Colors.textSecondary,
   },
   focusCard: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
+    ...Shadows.sm,
   },
   focusRow: {
     flexDirection: 'row',
@@ -302,9 +482,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   focusIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.sm,
@@ -316,18 +496,16 @@ const styles = StyleSheet.create({
     ...Typography.fontSize.md,
     ...Typography.fontWeight.semibold,
     color: Colors.text,
-    marginBottom: 2,
   },
   focusSubtitle: {
     ...Typography.fontSize.sm,
     color: Colors.textSecondary,
   },
   focusButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    alignItems: 'center',
   },
   focusButtonText: {
     ...Typography.fontSize.sm,
@@ -341,42 +519,40 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
     alignItems: 'center',
-    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    ...Shadows.sm,
   },
   emptyTitle: {
     ...Typography.fontSize.lg,
     ...Typography.fontWeight.semibold,
     color: Colors.text,
     marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   emptySubtext: {
     ...Typography.fontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginTop: Spacing.xs,
   },
   medicationCard: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
+    ...Shadows.sm,
   },
   medicationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.successLight,
-    marginBottom: Spacing.sm,
+    marginBottom: 4,
   },
   medicationBadgeText: {
     ...Typography.fontSize.xs,

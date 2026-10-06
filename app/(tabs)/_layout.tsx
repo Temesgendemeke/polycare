@@ -14,14 +14,14 @@ export default function TabLayout() {
         tabBarInactiveTintColor: Colors.textLight,
         tabBarStyle: {
           position: 'absolute',
-          left: 12,
-          right: 12,
-          bottom: 14,
-          height: 64,
-          borderRadius: 18,
+          left: 14,
+          right: 14,
+          bottom: 12,
+          height: 62,
+          borderRadius: 20,
           borderTopWidth: 0,
-          paddingTop: 8,
-          paddingBottom: 8,
+          paddingTop: 6,
+          paddingBottom: 6,
           backgroundColor: Colors.surface,
           ...Shadows.md,
         },
@@ -43,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="medications"
         options={{
-          title: t('navigation.medications'),
+          title: 'Meds',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="medkit" size={size} color={color} />
           ),
@@ -52,7 +52,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reminders"
         options={{
-          title: t('navigation.reminders'),
+          title: 'Reminders',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="alarm" size={size} color={color} />
           ),
@@ -61,37 +61,39 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: 'Habits',
+          title: 'Health',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="fitness" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
+
+      {/* Secondary screens hidden from bottom bar to avoid overcrowding */}
+      <Tabs.Screen
         name="tasks"
         options={{
-          title: 'Tasks',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
         name="diet"
         options={{
-          title: 'Diet',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="restaurant" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="consultation"
         options={{
-          title: t('settings.profile'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
     </Tabs>

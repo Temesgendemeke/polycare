@@ -19,12 +19,28 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.polycare.ncd"
     },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1D4FA3"
+        }
+      ]
+    ],
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#1D4FA3"
       },
-      "package": "com.polycare.ncd"
+      "package": "com.polycare.ncd",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/icon.png"

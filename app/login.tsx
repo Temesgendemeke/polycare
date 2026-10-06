@@ -52,11 +52,11 @@ export default function LoginScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Email</Text>
-              <View style={[styles.inputWrapper, fieldErrors.email && styles.inputError]}>
+              <View style={[styles.inputWrapper, fieldErrors.email ? styles.inputError : undefined]}>
                 <Ionicons name="mail-outline" size={18} color={fieldErrors.email ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   value={email}
-                  onChangeText={(v) => { setEmail(v); setFieldErrors((p) => ({ ...p, email: undefined })); }}
+                  onChangeText={(v) => { setEmail(v); setFieldErrors((p) => { const n = { ...p }; delete n.email; return n; }); }}
                   placeholder="your@email.com"
                   placeholderTextColor={Colors.textLight}
                   style={styles.input}
@@ -70,11 +70,11 @@ export default function LoginScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Password</Text>
-              <View style={[styles.inputWrapper, fieldErrors.password && styles.inputError]}>
+              <View style={[styles.inputWrapper, fieldErrors.password ? styles.inputError : undefined]}>
                 <Ionicons name="lock-closed-outline" size={18} color={fieldErrors.password ? Colors.error : Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   value={password}
-                  onChangeText={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }}
+                  onChangeText={(v) => { setPassword(v); setFieldErrors((p) => { const n = { ...p }; delete n.password; return n; }); }}
                   placeholder="Enter your password"
                   placeholderTextColor={Colors.textLight}
                   style={styles.input}

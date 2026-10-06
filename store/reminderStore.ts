@@ -1,32 +1,23 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { remindersApi } from '../lib/api';
-import { getAuthToken } from '../lib/api';
-
-interface Reminder {
-  id: string;
-  medicationId: string;
-  title?: string;
-  time: string;
-  days: number[];
-  enabled: boolean;
-  lastTaken?: string;
-  snoozedUntil?: string;
-}
+import { Reminder } from '../types';
+import { NotificationService } from '../services/notificationService';
+import { remindersApi, getAuthToken } from '../lib/api';
 
 interface ReminderState {
   reminders: Reminder[];
 
-  addReminder: (reminder: Reminder) => void;
-  updateReminder: (id: string, updates: Partial<Reminder>) => void;
-  deleteReminder: (id: string) => void;
-  toggleReminder: (id: string) => void;
+  addReminder: (reminder: Reminder, medicationName?: string) => Promise<void>;
+  updateReminder: (id: string, updates: Partial<Reminder>, medicationName?: string) => Promise<void>;
+  deleteReminder: (id: string) => Promise<void>;
+  toggleReminder: (id: string, medicationName?: string) => Promise<void>;
   markAsTaken: (id: string) => void;
   snoozeReminder: (id: string, minutes: number) => void;
   getRemindersForDay: (day: number) => Reminder[];
   getActiveReminders: () => Reminder[];
   fetchReminders: () => Promise<void>;
+  syncNotificationSchedules: () => Promise<void>;
 }
 
 export const useReminderStore = create<ReminderState>()(
@@ -34,40 +25,85 @@ export const useReminderStore = create<ReminderState>()(
     (set, get) => ({
       reminders: [],
 
-      addReminder: async (reminder) => {
-        set((state) => ({ reminders: [...state.reminders, reminder] }));
+      addReminder: async (reminder, medicationName) => {
+        let notificationIds: string[] = [];
+        if (reminder.enabled) {
+          notificationIds = await NotificationService.scheduleReminder(reminder, medicationName);
+        }
+
+        const newReminder = { ...reminder, notificationIds };
+        set((state) => ({ reminders: [...state.reminders, newReminder] }));
+
         try {
           if (getAuthToken()) {
-            await remindersApi.create(reminder);
+            await remindersApi.create(newReminder);
           }
-        } catch {}
+        } catch (e) {
+          console.warn('Failed to sync reminder with backend:', e);
+        }
       },
 
-      updateReminder: async (id, updates) => {
+      updateReminder: async (id, updates, medicationName) => {
+        const current = get().reminders.find((r) => r.id === id);
+        if (!current) return;
+
+        let notificationIds = current.notificationIds;
+
+        const merged: Reminder = { ...current, ...updates };
+
+        // If timing, days, or enabled status changed, reschedule notifications
+        if (
+          updates.time !== undefined ||
+          updates.days !== undefined ||
+          updates.enabled !== undefined
+        ) {
+          if (current.notificationIds && current.notificationIds.length > 0) {
+            await NotificationService.cancelReminder(current.notificationIds);
+          }
+
+          if (merged.enabled) {
+            notificationIds = await NotificationService.scheduleReminder(merged, medicationName);
+          } else {
+            notificationIds = [];
+          }
+        }
+
+        const updatedReminder = { ...merged, notificationIds };
+
         set((state) => ({
-          reminders: state.reminders.map((r) => (r.id === id ? { ...r, ...updates } : r)),
+          reminders: state.reminders.map((r) => (r.id === id ? updatedReminder : r)),
         }));
+
         try {
           if (getAuthToken()) {
             await remindersApi.update(id, updates);
           }
-        } catch {}
+        } catch (e) {
+          console.warn('Failed to sync reminder update with backend:', e);
+        }
       },
 
       deleteReminder: async (id) => {
+        const reminder = get().reminders.find((r) => r.id === id);
+        if (reminder?.notificationIds) {
+          await NotificationService.cancelReminder(reminder.notificationIds);
+        }
+
         set((state) => ({ reminders: state.reminders.filter((r) => r.id !== id) }));
+
         try {
           if (getAuthToken()) {
             await remindersApi.delete(id);
           }
-        } catch {}
+        } catch (e) {
+          console.warn('Failed to sync reminder deletion with backend:', e);
+        }
       },
 
-      toggleReminder: (id) => {
+      toggleReminder: async (id, medicationName) => {
         const reminder = get().reminders.find((r) => r.id === id);
-        if (reminder) {
-          get().updateReminder(id, { enabled: !reminder.enabled });
-        }
+        if (!reminder) return;
+        await get().updateReminder(id, { enabled: !reminder.enabled }, medicationName);
       },
 
       markAsTaken: (id) => {
@@ -80,7 +116,9 @@ export const useReminderStore = create<ReminderState>()(
       },
 
       getRemindersForDay: (day) => {
-        return get().reminders.filter((r) => r.enabled && r.days.includes(day));
+        return get().reminders.filter(
+          (r) => r.enabled && (r.days.length === 0 || r.days.includes(day))
+        );
       },
 
       getActiveReminders: () => {
@@ -100,9 +138,33 @@ export const useReminderStore = create<ReminderState>()(
             enabled: item.enabled !== false,
             lastTaken: item.lastTaken,
             snoozedUntil: item.snoozedUntil,
+            dosage: item.dosage,
+            instructions: item.instructions,
+            notificationIds: item.notificationIds || [],
           }));
           set({ reminders: mapped });
-        } catch {}
+          // Ensure enabled reminders are scheduled on this device
+          await get().syncNotificationSchedules();
+        } catch (e) {
+          console.warn('Error fetching reminders:', e);
+        }
+      },
+
+      syncNotificationSchedules: async () => {
+        const active = get().reminders.filter((r) => r.enabled);
+        for (const reminder of active) {
+          // If not currently scheduled or to refresh schedules
+          if (!reminder.notificationIds || reminder.notificationIds.length === 0) {
+            const ids = await NotificationService.scheduleReminder(reminder);
+            if (ids.length > 0) {
+              set((state) => ({
+                reminders: state.reminders.map((r) =>
+                  r.id === reminder.id ? { ...r, notificationIds: ids } : r
+                ),
+              }));
+            }
+          }
+        }
       },
     }),
     {
@@ -111,3 +173,4 @@ export const useReminderStore = create<ReminderState>()(
     }
   )
 );
+export type { Reminder };

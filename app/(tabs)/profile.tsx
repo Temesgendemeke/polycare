@@ -51,6 +51,47 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* NCD Patient Health Summary & History Form (from index.html) */}
+        <View style={styles.healthSummaryCard}>
+          <View style={styles.healthSummaryHeader}>
+            <View>
+              <Text style={styles.healthSummaryTitle}>NCD Patient Profile</Text>
+              <Text style={styles.healthSummarySubtitle}>Chronic Care & Vital Records</Text>
+            </View>
+            <View style={styles.healthScorePill}>
+              <Text style={styles.healthScorePillLabel}>Health Score</Text>
+              <Text style={styles.healthScorePillValue}>82 / 100</Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryStatsRow}>
+            <View style={styles.summaryStatItem}>
+              <Text style={styles.summaryStatLabel}>Conditions</Text>
+              <Text style={styles.summaryStatValue}>HTN & T2D</Text>
+            </View>
+            <View style={styles.summaryStatDivider} />
+            <View style={styles.summaryStatItem}>
+              <Text style={styles.summaryStatLabel}>Age</Text>
+              <Text style={styles.summaryStatValue}>54 yrs</Text>
+            </View>
+            <View style={styles.summaryStatDivider} />
+            <View style={styles.summaryStatItem}>
+              <Text style={styles.summaryStatLabel}>Active Meds</Text>
+              <Text style={styles.summaryStatValue}>5 Prescribed</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.openHistoryBtn}
+            onPress={() => router.push('/history')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="clipboard-outline" size={18} color={Colors.textOnPrimary} />
+            <Text style={styles.openHistoryBtnText}>Open Patient History Form (13 Sections)</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.textOnPrimary} />
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
           <Text style={styles.sectionSubtitle}>Choose your preferred app language.</Text>
@@ -348,5 +389,89 @@ const styles = StyleSheet.create({
     ...Typography.fontSize.md,
     ...Typography.fontWeight.semibold,
     color: Colors.error,
+  },
+  healthSummaryCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    ...Shadows.sm,
+  },
+  healthSummaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  healthSummaryTitle: {
+    ...Typography.fontSize.md,
+    ...Typography.fontWeight.bold,
+    color: Colors.text,
+  },
+  healthSummarySubtitle: {
+    ...Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  healthScorePill: {
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+  },
+  healthScorePillLabel: {
+    ...Typography.fontSize.xs,
+    color: Colors.primary,
+  },
+  healthScorePillValue: {
+    ...Typography.fontSize.sm,
+    ...Typography.fontWeight.bold,
+    color: Colors.primary,
+  },
+  summaryStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  summaryStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  summaryStatLabel: {
+    ...Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  summaryStatValue: {
+    ...Typography.fontSize.sm,
+    ...Typography.fontWeight.bold,
+    color: Colors.text,
+  },
+  summaryStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: Colors.border,
+  },
+  openHistoryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+  },
+  openHistoryBtnText: {
+    ...Typography.fontSize.sm,
+    ...Typography.fontWeight.semibold,
+    color: Colors.textOnPrimary,
   },
 });

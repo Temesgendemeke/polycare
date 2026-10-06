@@ -7,9 +7,9 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   password: { type: String, required: true },
   dateOfBirth: String,
-  preferredLanguage: { type: String, enum: ['en', 'am', 'or', 'ti', 'gz'], default: 'en' },
+  preferredLanguage: { type: String, default: 'en' },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
-  conditions: [{ type: String, enum: ['hypertension', 'diabetes', 'heart_failure', 'copd', 'asthma', 'other'] }],
+  conditions: [{ type: String, trim: true }],
   allergies: [String],
   emergencyContact: {
     name: String,
