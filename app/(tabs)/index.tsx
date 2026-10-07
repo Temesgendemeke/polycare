@@ -128,13 +128,13 @@ export default function HomeScreen() {
               <Text style={styles.brandPillText}>POLY CARE HEALTH</Text>
             </View>
 
-            {/* Health Score Badge from index.html */}
+            {/* Health Score Badge */}
             <View style={styles.healthScoreBadge}>
-              <View>
-                <Text style={styles.healthScoreLabel}>{t('dashboard.healthScore')}</Text>
+              <Text style={styles.healthScoreLabel}>{t('dashboard.healthScore')}</Text>
+              <View style={styles.healthScoreValueRow}>
                 <Text style={styles.healthScoreNum}>82</Text>
+                <Text style={styles.healthScoreTotal}> / 100</Text>
               </View>
-              <Text style={styles.healthScoreTotal}>/ 100</Text>
             </View>
           </View>
 
@@ -165,8 +165,10 @@ export default function HomeScreen() {
 
         {/* Vitals Grid from index.html */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('dashboard.recordedVitals')}</Text>
-          <Text style={styles.sectionHint}>{t('dashboard.latestCheck')}</Text>
+          <View style={styles.sectionTitleCol}>
+            <Text style={styles.sectionTitle}>{t('dashboard.recordedVitals')}</Text>
+            <Text style={styles.sectionHint}>{t('dashboard.latestCheck')}</Text>
+          </View>
         </View>
 
         <View style={styles.vitalsGrid}>
@@ -187,8 +189,10 @@ export default function HomeScreen() {
 
         {/* Health Features Grid from index.html */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('dashboard.features')}</Text>
-          <Text style={styles.sectionHint}>{t('dashboard.personalizedCare')}</Text>
+          <View style={styles.sectionTitleCol}>
+            <Text style={styles.sectionTitle}>{t('dashboard.features')}</Text>
+            <Text style={styles.sectionHint}>{t('dashboard.personalizedCare')}</Text>
+          </View>
         </View>
 
         <View style={styles.actionsGrid}>
@@ -242,7 +246,9 @@ export default function HomeScreen() {
 
         {/* Current Medications */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('dashboard.currentMeds')}</Text>
+          <Text style={[styles.sectionTitle, { flex: 1, marginRight: Spacing.sm }]}>
+            {t('dashboard.currentMeds')}
+          </Text>
           <TouchableOpacity onPress={() => router.push('/(tabs)/medications')}>
             <Text style={styles.viewAllText}>{t('dashboard.viewAll')}</Text>
           </TouchableOpacity>
@@ -313,20 +319,26 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   healthScoreBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#255CB9',
     borderRadius: BorderRadius.lg,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderWidth: 1,
     borderColor: '#4A80D8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   healthScoreLabel: {
     fontSize: 9,
     color: '#DCE8FD',
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  healthScoreValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 1,
   },
   healthScoreNum: {
     ...Typography.fontSize.md,
@@ -335,8 +347,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   healthScoreTotal: {
-    ...Typography.fontSize.xs,
+    fontSize: 11,
     color: '#DCE8FD',
+    fontWeight: '500',
   },
   welcomeText: {
     ...Typography.fontSize.xxl,
@@ -380,8 +393,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: Spacing.sm,
+    gap: 8,
+  },
+  sectionTitleCol: {
+    flex: 1,
+    marginRight: Spacing.xs,
   },
   sectionTitle: {
     ...Typography.fontSize.xl,
@@ -391,6 +409,7 @@ const styles = StyleSheet.create({
   sectionHint: {
     ...Typography.fontSize.sm,
     color: Colors.textSecondary,
+    marginTop: 2,
   },
   vitalsGrid: {
     flexDirection: 'row',

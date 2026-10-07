@@ -402,7 +402,7 @@ export default function HabitsScreen() {
                   </View>
 
                   {/* Guided Exercise CTA Button (If item is an exercise) */}
-                  {matchingExercise && (
+                  {/* {matchingExercise && (
                     <View style={styles.exerciseActionRow}>
                       <TouchableOpacity
                         style={styles.launchExerciseBtn}
@@ -415,7 +415,7 @@ export default function HabitsScreen() {
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  )}
+                  )} */}
                 </View>
               );
             })

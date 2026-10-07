@@ -424,12 +424,12 @@ const styles = StyleSheet.create({
   },
   healthScorePillLabel: {
     ...Typography.fontSize.xs,
-    color: Colors.primary,
+    color: Colors.background,
   },
   healthScorePillValue: {
     ...Typography.fontSize.sm,
     ...Typography.fontWeight.bold,
-    color: Colors.primary,
+    color: Colors.background,
   },
   summaryStatsRow: {
     flexDirection: 'row',

@@ -71,7 +71,7 @@ export default function ConsultationScreen() {
         </View>
 
         <View style={styles.sectionHeader}>
-          <View>
+          <View style={{ flex: 1, marginRight: Spacing.sm }}>
             <Text style={styles.sectionTitle}>{t('consultation.clinicalPharmacists')}</Text>
             <Text style={styles.sectionSubtext}>{t('consultation.expertGuidance')}</Text>
           </View>
