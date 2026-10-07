@@ -15,7 +15,8 @@ export interface Exercise {
   suitableConditions: string[];
   precautions: string[];
   imageUrl?: string;
-  videoUrl?: string;
+  caloriesBurned?: number;
+  todos?: string[];
 }
 
 export interface ExercisePlan {
@@ -35,3 +36,4 @@ export interface ExercisePlanItem {
   completed: boolean;
   completedAt?: string;
 }
+

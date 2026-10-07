@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMedicationStore, useUserStore } from '../../store';
+import { useMedicationStore, useUserStore, useReminderStore } from '../../store';
+import { isToday } from '../../store/reminderStore';
 import { useTranslation } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 
@@ -10,13 +11,21 @@ export default function HomeScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const user = useUserStore((s) => s.user);
-  const { medications } = useMedicationStore();
+  const { medications, prescribedMeds } = useMedicationStore();
+  const { reminders } = useReminderStore();
 
   const safeMedications = Array.isArray(medications) ? medications : [];
-  const activeMedications = safeMedications.filter((m) => m?.status === 'active');
-  const highPriorityCount = safeMedications.filter((m) =>
-    String(m?.frequency ?? '').toLowerCase().includes('day')
-  ).length;
+  const activeUserMeds = safeMedications.filter((m) => m?.status === 'active');
+  const allDisplayMeds = [...activeUserMeds, ...(prescribedMeds || [])];
+  const totalActiveMeds = allDisplayMeds.length;
+
+  const todayDay = new Date().getDay();
+  const todaysReminders = reminders.filter(
+    (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDay))
+  );
+  const totalDoses = todaysReminders.length;
+  const takenDoses = todaysReminders.filter((r) => isToday(r.lastTaken)).length;
+  const todayAdherencePct = totalDoses > 0 ? Math.round((takenDoses / totalDoses) * 100) : 100;
 
   const vitals = [
     {
@@ -138,17 +147,17 @@ export default function HomeScreen() {
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{activeMedications.length}</Text>
+              <Text style={styles.statValue}>{totalActiveMeds}</Text>
               <Text style={styles.statLabel}>{t('dashboard.activeMeds')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{highPriorityCount}</Text>
+              <Text style={styles.statValue}>{totalDoses}</Text>
               <Text style={styles.statLabel}>{t('dashboard.dailyDoses')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>98%</Text>
+              <Text style={styles.statValue}>{todayAdherencePct}%</Text>
               <Text style={styles.statLabel}>{t('dashboard.adherenceGoal')}</Text>
             </View>
           </View>
@@ -215,7 +224,11 @@ export default function HomeScreen() {
             <View style={styles.focusTextWrap}>
               <Text style={styles.focusTitle}>{t('dashboard.todaysFocus')}</Text>
               <Text style={styles.focusSubtitle}>
-                {t('dashboard.focusHint')}
+                {totalDoses === 0
+                  ? t('dashboard.focusHint')
+                  : takenDoses === totalDoses
+                  ? `All ${totalDoses} doses completed today!`
+                  : `${takenDoses} of ${totalDoses} doses taken today (${totalDoses - takenDoses} remaining)`}
               </Text>
             </View>
           </View>
@@ -235,7 +248,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {activeMedications.length === 0 ? (
+        {allDisplayMeds.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="medkit-outline" size={26} color={Colors.textLight} />
             <Text style={styles.emptyTitle}>{t('dashboard.noMeds')}</Text>
@@ -244,7 +257,7 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
-          activeMedications.slice(0, 3).map((medication) => (
+          allDisplayMeds.slice(0, 3).map((medication) => (
             <View key={medication.id} style={styles.medicationCard}>
               <View style={styles.medicationBadge}>
                 <Ionicons name="checkmark-circle" size={14} color={Colors.success} />

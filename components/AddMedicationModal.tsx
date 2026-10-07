@@ -24,6 +24,7 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
   const addMedication = useMedicationStore((s) => s.addMedication);
   const updateMedication = useMedicationStore((s) => s.updateMedication);
   const addReminder = useReminderStore((s) => s.addReminder);
+  const updateRemindersForMedication = useReminderStore((s) => s.updateRemindersForMedication);
 
   const [name, setName] = useState(editMedication?.name || '');
   const [genericName, setGenericName] = useState(editMedication?.genericName || '');
@@ -63,6 +64,11 @@ export default function AddMedicationModal({ visible, onClose, editMedication }:
 
     if (editMedication) {
       updateMedication(med.id, med);
+      updateRemindersForMedication(med.id, {
+        title: med.name,
+        dosage: `${med.dosage} ${med.unit}`,
+        instructions: med.instructions,
+      });
     } else {
       addMedication(med);
 

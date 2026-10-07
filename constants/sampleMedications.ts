@@ -118,3 +118,55 @@ export const calcOverallAdherence = (meds: Pick<SampleMedication, 'takenDoses' |
   const taken = meds.reduce((sum, m) => sum + m.takenDoses, 0);
   return calcAdherenceRate(taken, scheduled);
 };
+
+export interface PrescribedDoseConfig {
+  medicationId: string;
+  title: string;
+  time: string;
+  dosage: string;
+  instructions?: string;
+  withFood?: boolean;
+}
+
+export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
+  {
+    medicationId: 'sample-metformin',
+    title: 'Metformin',
+    time: '08:00',
+    dosage: '500 mg',
+    instructions: 'Take with food',
+    withFood: true,
+  },
+  {
+    medicationId: 'sample-lisinopril',
+    title: 'Lisinopril',
+    time: '09:00',
+    dosage: '10 mg',
+    instructions: 'Take in the morning',
+    withFood: false,
+  },
+  {
+    medicationId: 'sample-atorvastatin',
+    title: 'Atorvastatin',
+    time: '20:00',
+    dosage: '20 mg',
+    instructions: 'Take in the evening',
+    withFood: false,
+  },
+  {
+    medicationId: 'sample-metformin',
+    title: 'Metformin',
+    time: '20:00',
+    dosage: '500 mg',
+    instructions: 'Take with food',
+    withFood: true,
+  },
+  {
+    medicationId: 'sample-aspirin',
+    title: 'Baby Aspirin',
+    time: '22:00',
+    dosage: '81 mg',
+    instructions: 'Take with water before bed',
+    withFood: true,
+  },
+];

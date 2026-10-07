@@ -15,19 +15,94 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation, useNotifications } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 import { useReminderStore, useMedicationStore } from '../../store';
+import { isToday } from '../../store/reminderStore';
 import { syncReminderToSlot } from '../../lib/doseSync';
 import { Reminder } from '../../types';
+
+export const formatTime12Hour = (timeStr?: string): string => {
+  if (!timeStr) return '';
+  const trimmed = timeStr.trim();
+  if (/am|pm/i.test(trimmed)) return trimmed;
+
+  const parts = trimmed.split(':');
+  if (parts.length < 2) return timeStr;
+
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1].padStart(2, '0');
+  if (isNaN(hours)) return timeStr;
+
+  const period = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+
+  return `${hours}:${minutes} ${period}`;
+};
+
+export const splitTo12Hour = (time24?: string): { displayTime: string; period: 'AM' | 'PM' } => {
+  if (!time24) return { displayTime: '8:00', period: 'AM' };
+  const parts = time24.split(':');
+  if (parts.length < 2) return { displayTime: time24, period: 'AM' };
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1].padStart(2, '0');
+  const period: 'AM' | 'PM' = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return { displayTime: `${hours}:${minutes}`, period };
+};
+
+export const parseTo24Hour = (timeInput: string, ampm: 'AM' | 'PM' = 'AM'): string | null => {
+  const trimmed = timeInput.trim().toUpperCase();
+  const matchWithPeriod = trimmed.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (matchWithPeriod) {
+    let hours = parseInt(matchWithPeriod[1], 10);
+    const minutes = parseInt(matchWithPeriod[2], 10);
+    const period = matchWithPeriod[3].toUpperCase();
+    if (hours < 1 || hours > 12 || minutes < 0 || minutes > 59) return null;
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
+
+  const matchSimple = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (matchSimple) {
+    let hours = parseInt(matchSimple[1], 10);
+    const minutes = parseInt(matchSimple[2], 10);
+    if (minutes < 0 || minutes > 59) return null;
+
+    if (hours >= 1 && hours <= 12) {
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    if (hours >= 0 && hours <= 23) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+  }
+
+  const matchHourOnly = trimmed.match(/^(\d{1,2})$/);
+  if (matchHourOnly) {
+    let hours = parseInt(matchHourOnly[1], 10);
+    if (hours >= 1 && hours <= 12) {
+      if (ampm === 'PM' && hours < 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      return `${String(hours).padStart(2, '0')}:00`;
+    }
+  }
+
+  return null;
+};
 
 export default function RemindersScreen() {
   const { t } = useTranslation();
   const DAY_NAMES = [t('reminders.sun'), t('reminders.mon'), t('reminders.tue'), t('reminders.wed'), t('reminders.thu'), t('reminders.fri'), t('reminders.sat')];
   const PRESET_TIMES = [
-    { label: t('reminders.morning'), time: '08:00' },
-    { label: t('reminders.noon'), time: '12:00' },
-    { label: t('reminders.evening'), time: '18:00' },
-    { label: t('reminders.bedtime'), time: '21:00' },
+    { label: t('reminders.morning'), displayTime: '8:00', ampm: 'AM' as const, time24: '08:00' },
+    { label: t('reminders.noon'), displayTime: '12:00', ampm: 'PM' as const, time24: '12:00' },
+    { label: t('reminders.evening'), displayTime: '6:00', ampm: 'PM' as const, time24: '18:00' },
+    { label: t('reminders.bedtime'), displayTime: '9:00', ampm: 'PM' as const, time24: '21:00' },
   ];
-  const { medications } = useMedicationStore();
+  const { medications, prescribedMeds } = useMedicationStore();
   const {
     reminders,
     addReminder,
@@ -35,6 +110,7 @@ export default function RemindersScreen() {
     toggleReminder,
     deleteReminder,
     markAsTaken,
+    toggleTaken,
     snoozeReminder,
   } = useReminderStore();
 
@@ -47,9 +123,26 @@ export default function RemindersScreen() {
   // Form State
   const [selectedMedId, setSelectedMedId] = useState<string>('');
   const [customTitle, setCustomTitle] = useState('');
-  const [time, setTime] = useState('08:00');
+  const [timeStr, setTimeStr] = useState('8:00');
+  const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
   const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [dosage, setDosage] = useState('');
+
+  const allMeds = useMemo(() => {
+    const list: { id: string; name: string; dosage?: string; unit?: string }[] = [];
+    const seen = new Set<string>();
+    for (const m of [...(prescribedMeds || []), ...(medications || [])]) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        list.push({
+          id: m.id,
+          name: m.name,
+          dosage: m.dosage ? `${m.dosage} ${m.unit || 'mg'}` : undefined,
+        });
+      }
+    }
+    return list;
+  }, [medications, prescribedMeds]);
 
   const sortedReminders = useMemo(
     () =>
@@ -61,15 +154,17 @@ export default function RemindersScreen() {
   );
 
   const medName = (medicationId: string) =>
-    medications.find((m) => m.id === medicationId)?.name || medicationId;
+    allMeds.find((m) => m.id === medicationId)?.name || medicationId;
 
   const openAddModal = () => {
     setEditingReminder(null);
-    setSelectedMedId(medications[0]?.id || '');
-    setCustomTitle('');
-    setTime('08:00');
+    const firstMed = allMeds[0];
+    setSelectedMedId(firstMed?.id || '');
+    setCustomTitle(firstMed?.name || '');
+    setTimeStr('8:00');
+    setAmpm('AM');
     setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
-    setDosage('');
+    setDosage(firstMed?.dosage || '');
     setModalVisible(true);
   };
 
@@ -77,7 +172,9 @@ export default function RemindersScreen() {
     setEditingReminder(reminder);
     setSelectedMedId(reminder.medicationId);
     setCustomTitle(reminder.title || '');
-    setTime(reminder.time);
+    const { displayTime, period } = splitTo12Hour(reminder.time);
+    setTimeStr(displayTime);
+    setAmpm(period);
     setSelectedDays(reminder.days.length > 0 ? reminder.days : [0, 1, 2, 3, 4, 5, 6]);
     setDosage(reminder.dosage || '');
     setModalVisible(true);
@@ -104,9 +201,8 @@ export default function RemindersScreen() {
   };
 
   const handleSaveReminder = async () => {
-    const formattedTime = time.trim();
-    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(formattedTime)) {
+    const formatted24 = parseTo24Hour(timeStr, ampm);
+    if (!formatted24) {
       Alert.alert(t('reminders.invalidTime'), t('reminders.invalidTimeMsg'));
       return;
     }
@@ -119,7 +215,7 @@ export default function RemindersScreen() {
         {
           medicationId: selectedMedId,
           title,
-          time: formattedTime,
+          time: formatted24,
           days: selectedDays,
           dosage: dosage.trim() || undefined,
         },
@@ -131,7 +227,7 @@ export default function RemindersScreen() {
           id: Date.now().toString(),
           medicationId: selectedMedId || 'custom',
           title,
-          time: formattedTime,
+          time: formatted24,
           days: selectedDays,
           enabled: true,
           dosage: dosage.trim() || undefined,
@@ -252,9 +348,9 @@ export default function RemindersScreen() {
                     </Text>
                   </View>
 
-                  {item.lastTaken && (
+                  {isToday(item.lastTaken) && (
                     <Text style={styles.lastTaken}>
-                      ✓ {t('reminders.takenToday')} ({new Date(item.lastTaken).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                      ✓ {t('reminders.takenToday')} ({new Date(item.lastTaken!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
                     </Text>
                   )}
                 </View>
@@ -264,13 +360,20 @@ export default function RemindersScreen() {
                 {item.enabled && (
                   <TouchableOpacity
                     style={styles.takenButton}
-                    onPress={() => {
-                      markAsTaken(item.id);
+                    onPress={async () => {
+                      const wasTaken = isToday(item.lastTaken);
+                      await toggleTaken(item.id);
                       syncReminderToSlot(item);
-                      Alert.alert(t('reminders.recorded'), t('reminders.markedTaken', { name: item.title || medName(item.medicationId) }));
+                      if (!wasTaken) {
+                        Alert.alert(t('reminders.recorded'), t('reminders.markedTaken', { name: item.title || medName(item.medicationId) }));
+                      }
                     }}
                   >
-                    <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+                    <Ionicons
+                      name={isToday(item.lastTaken) ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                      size={26}
+                      color={isToday(item.lastTaken) ? Colors.success : Colors.textLight}
+                    />
                   </TouchableOpacity>
                 )}
 
@@ -325,16 +428,16 @@ export default function RemindersScreen() {
           <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
             {/* Medication Selector */}
             <Text style={styles.fieldLabel}>{t('reminders.selectMedication')}</Text>
-            {medications.length > 0 && (
+            {allMeds.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-                {medications.map((m) => (
+                {allMeds.map((m) => (
                   <TouchableOpacity
                     key={m.id}
                     style={[styles.medChip, selectedMedId === m.id && styles.medChipSelected]}
                     onPress={() => {
                       setSelectedMedId(m.id);
                       setCustomTitle(m.name);
-                      if (m.dosage && m.unit) setDosage(`${m.dosage} ${m.unit}`);
+                      if (m.dosage) setDosage(m.dosage);
                     }}
                   >
                     <Text style={[styles.medChipText, selectedMedId === m.id && styles.medChipTextSelected]}>
@@ -359,8 +462,8 @@ export default function RemindersScreen() {
             <View style={styles.timeInputRow}>
               <TextInput
                 style={[styles.input, styles.timeInput]}
-                value={time}
-                onChangeText={setTime}
+                value={timeStr}
+                onChangeText={setTimeStr}
                 placeholder="08:00"
                 keyboardType="numbers-and-punctuation"
                 placeholderTextColor={Colors.textLight}
@@ -368,11 +471,14 @@ export default function RemindersScreen() {
               <View style={styles.presetRow}>
                 {PRESET_TIMES.map((preset) => (
                   <TouchableOpacity
-                    key={preset.time}
-                    style={[styles.presetChip, time === preset.time && styles.presetChipActive]}
-                    onPress={() => setTime(preset.time)}
+                    key={preset.time24}
+                    style={[styles.presetChip, parseTo24Hour(timeStr, ampm) === preset.time24 && styles.presetChipActive]}
+                    onPress={() => {
+                      setTimeStr(preset.displayTime);
+                      setAmpm(preset.ampm);
+                    }}
                   >
-                    <Text style={[styles.presetText, time === preset.time && styles.presetTextActive]}>
+                    <Text style={[styles.presetText, parseTo24Hour(timeStr, ampm) === preset.time24 && styles.presetTextActive]}>
                       {preset.label}
                     </Text>
                   </TouchableOpacity>

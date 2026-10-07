@@ -4,6 +4,18 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { Reminder } from '../types';
 import { NotificationService } from '../services/notificationService';
 import { remindersApi, getAuthToken } from '../lib/api';
+import { SAMPLE_PRESCRIBED_DOSES } from '../constants/sampleMedications';
+
+export const isToday = (iso?: string): boolean => {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const n = new Date();
+  return (
+    d.getFullYear() === n.getFullYear() &&
+    d.getMonth() === n.getMonth() &&
+    d.getDate() === n.getDate()
+  );
+};
 
 interface ReminderState {
   reminders: Reminder[];
@@ -15,11 +27,17 @@ interface ReminderState {
   deleteReminder: (id: string) => Promise<void>;
   toggleReminder: (id: string, medicationName?: string) => Promise<void>;
   markAsTaken: (id: string) => void;
+  toggleTaken: (id: string) => Promise<void>;
+  deleteRemindersForMedication: (medicationId: string) => Promise<void>;
+  updateRemindersForMedication: (
+    medicationId: string,
+    updates: { title?: string; dosage?: string; instructions?: string }
+  ) => Promise<void>;
   snoozeReminder: (id: string, minutes: number) => void;
   getRemindersForDay: (day: number) => Reminder[];
   getActiveReminders: () => Reminder[];
   ensurePrescribedReminders: (
-    items: { medicationId: string; title: string; time: string; dosage?: string }[]
+    items?: { medicationId: string; title: string; time: string; dosage?: string; instructions?: string }[]
   ) => Promise<void>;
   fetchReminders: () => Promise<void>;
   syncNotificationSchedules: () => Promise<void>;
@@ -133,6 +151,41 @@ export const useReminderStore = create<ReminderState>()(
         get().updateReminder(id, { lastTaken: new Date().toISOString() });
       },
 
+      toggleTaken: async (id) => {
+        const reminder = get().reminders.find((r) => r.id === id);
+        if (!reminder) return;
+        const takenToday = isToday(reminder.lastTaken);
+        await get().updateReminder(
+          id,
+          { lastTaken: takenToday ? undefined : new Date().toISOString() },
+          reminder.title
+        );
+      },
+
+      deleteRemindersForMedication: async (medicationId) => {
+        const toDelete = get().reminders.filter((r) => r.medicationId === medicationId);
+        for (const reminder of toDelete) {
+          if (reminder.notificationIds && reminder.notificationIds.length > 0) {
+            await NotificationService.cancelReminder(reminder.notificationIds);
+          }
+          if (!isSampleReminder(reminder.id, reminder.medicationId) && getAuthToken()) {
+            try {
+              await remindersApi.delete(reminder.id);
+            } catch {}
+          }
+        }
+        set((state) => ({
+          reminders: state.reminders.filter((r) => r.medicationId !== medicationId),
+        }));
+      },
+
+      updateRemindersForMedication: async (medicationId, updates) => {
+        const matches = get().reminders.filter((r) => r.medicationId === medicationId);
+        for (const r of matches) {
+          await get().updateReminder(r.id, updates, updates.title || r.title);
+        }
+      },
+
       snoozeReminder: (id, minutes) => {
         const snoozedUntil = new Date(Date.now() + minutes * 60000).toISOString();
         get().updateReminder(id, { snoozedUntil });
@@ -149,8 +202,8 @@ export const useReminderStore = create<ReminderState>()(
       },
 
       ensurePrescribedReminders: async (items) => {
-        if (get().prescribedSeeded) return;
-        for (const item of items) {
+        const dosesToSeed = items && items.length > 0 ? items : SAMPLE_PRESCRIBED_DOSES;
+        for (const item of dosesToSeed) {
           const exists = get().reminders.some(
             (r) => r.medicationId === item.medicationId && r.time === item.time
           );
@@ -165,6 +218,7 @@ export const useReminderStore = create<ReminderState>()(
                 days: [0, 1, 2, 3, 4, 5, 6],
                 enabled: true,
                 dosage: item.dosage,
+                instructions: item.instructions,
               },
               item.title
             );

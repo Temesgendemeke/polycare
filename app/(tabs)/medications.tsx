@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMedicationStore, useReminderStore } from '../../store';
+import { isToday } from '../../store/reminderStore';
 import { useTranslation } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 import { Medication } from '../../types';
 import AddMedicationModal from '../../components/AddMedicationModal';
 import { DDIService } from '../../services/ddiService';
 import InteractionCard from '../../components/InteractionCard';
-import { todayKey } from '../../constants/sampleMedications';
 
 export interface DailyDoseItem {
   id: string;
@@ -28,98 +27,89 @@ export interface DailyDoseItem {
   taken: boolean;
 }
 
-const DEFAULT_DAILY_DOSES: DailyDoseItem[] = [
-  {
-    id: 'dose-metformin-morning',
-    name: 'Metformin',
-    type: '500mg Tablet',
-    withFood: true,
-    time: '8:00 AM',
-    taken: true,
-  },
-  {
-    id: 'dose-lisinopril-morning',
-    name: 'Lisinopril',
-    type: '10mg Tablet',
-    withFood: false,
-    time: '9:00 AM',
-    taken: true,
-  },
-  {
-    id: 'dose-atorvastatin-evening',
-    name: 'Atorvastatin',
-    type: '20mg Tablet',
-    withFood: false,
-    time: '8:00 PM',
-    taken: false,
-  },
-  {
-    id: 'dose-metformin-evening',
-    name: 'Metformin',
-    type: '500mg Tablet',
-    withFood: true,
-    time: '8:00 PM',
-    taken: false,
-  },
-  {
-    id: 'dose-aspirin-night',
-    name: 'Baby Aspirin',
-    type: '81mg Tablet',
-    withFood: true,
-    time: '10:00 PM',
-    taken: false,
-  },
-];
+const formatDoseTime = (timeStr: string): string => {
+  const parts = timeStr.split(':');
+  if (parts.length !== 2) return timeStr;
+  let hour = parseInt(parts[0], 10);
+  const minute = parts[1];
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute} ${ampm}`;
+};
 
 const WEEK_DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 const BASE_WEEKLY_HISTORY = [85, 90, 100, 70, 80, 95]; // Past 6 days from index.html
 
 export default function MedicationsScreen() {
   const { t } = useTranslation();
-  const { medications, deleteMedication } = useMedicationStore();
+  const { medications, prescribedMeds, deleteMedication } = useMedicationStore();
+  const {
+    reminders,
+    toggleTaken,
+    ensurePrescribedReminders,
+    deleteRemindersForMedication,
+  } = useReminderStore();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editMed, setEditMed] = useState<Medication | undefined>(undefined);
   const [showInteractions, setShowInteractions] = useState(false);
 
-  // Daily checklist state (persisted per day)
-  const [dailyDoses, setDailyDoses] = useState<DailyDoseItem[]>(DEFAULT_DAILY_DOSES);
-
-  // Load daily checklist from AsyncStorage
+  // Auto-seed prescribed reminders on mount
   useEffect(() => {
-    const loadDoses = async () => {
-      try {
-        const key = `@polycare_daily_doses_${todayKey()}`;
-        const saved = await AsyncStorage.getItem(key);
-        if (saved) {
-          setDailyDoses(JSON.parse(saved));
-        } else {
-          setDailyDoses(DEFAULT_DAILY_DOSES);
-        }
-      } catch (e) {
-        setDailyDoses(DEFAULT_DAILY_DOSES);
-      }
-    };
-    loadDoses();
+    ensurePrescribedReminders();
   }, []);
 
-  // Save daily checklist on change
-  const saveDoses = async (updated: DailyDoseItem[]) => {
-    setDailyDoses(updated);
-    try {
-      const key = `@polycare_daily_doses_${todayKey()}`;
-      await AsyncStorage.setItem(key, JSON.stringify(updated));
-    } catch (e) {}
-  };
+  // Today's day index (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  const todayDayIndex = new Date().getDay();
 
-  const toggleDose = (id: string) => {
-    const updated = dailyDoses.map((d) => (d.id === id ? { ...d, taken: !d.taken } : d));
-    saveDoses(updated);
+  // Map medications for fast lookup of dosage, food instructions, etc.
+  const allMedsMap = useMemo(() => {
+    const map = new Map<string, { name: string; dosage?: string; withFood?: boolean }>();
+    for (const m of [...(prescribedMeds || []), ...(medications || [])]) {
+      map.set(m.id, {
+        name: m.name,
+        dosage: `${m.dosage} ${m.unit}`,
+        withFood: (m as any).withFood || m.instructions?.toLowerCase().includes('food') || false,
+      });
+    }
+    return map;
+  }, [medications, prescribedMeds]);
+
+  // Dynamically compute today's doses from reminders scheduled for today
+  const dailyDoses: DailyDoseItem[] = useMemo(() => {
+    const activeToday = reminders.filter(
+      (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDayIndex))
+    );
+
+    return activeToday
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .map((r) => {
+        const med = allMedsMap.get(r.medicationId);
+        const name = r.title || med?.name || 'Medication';
+        const type = r.dosage || med?.dosage || 'Scheduled Dose';
+        const withFood = med?.withFood || r.instructions?.toLowerCase().includes('food') || false;
+        const taken = isToday(r.lastTaken);
+
+        return {
+          id: r.id,
+          name,
+          type,
+          time: formatDoseTime(r.time),
+          withFood,
+          taken,
+        };
+      });
+  }, [reminders, todayDayIndex, allMedsMap]);
+
+  const toggleDose = async (id: string) => {
+    await toggleTaken(id);
   };
 
   // Calculations for Today's Adherence Rate
   const totalDoses = dailyDoses.length;
   const takenDoses = dailyDoses.filter((d) => d.taken).length;
-  const todayAdherencePct = totalDoses > 0 ? Math.round((takenDoses / totalDoses) * 100) : 0;
+  const todayAdherencePct = totalDoses > 0 ? Math.round((takenDoses / totalDoses) * 100) : 100;
 
   // 7-day weekly history array, where 7th bar is today's real-time adherence rate
   const weeklyHistory = [...BASE_WEEKLY_HISTORY, todayAdherencePct];
@@ -132,7 +122,14 @@ export default function MedicationsScreen() {
   const handleDelete = (id: string, name: string) => {
     Alert.alert(t('medications.deleteTitle'), t('medications.removeConfirm', { name }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deleteMedication(id) },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          deleteMedication(id);
+          await deleteRemindersForMedication(id);
+        },
+      },
     ]);
   };
 
@@ -216,39 +213,48 @@ export default function MedicationsScreen() {
         </View>
 
         <View style={styles.checklistList}>
-          {dailyDoses.map((dose) => (
-            <TouchableOpacity
-              key={dose.id}
-              style={[styles.checklistItem, dose.taken && styles.checklistItemDone]}
-              onPress={() => toggleDose(dose.id)}
-              activeOpacity={0.7}
-            >
-              {/* Checkmark Circle Button */}
-              <View style={[styles.checkCircle, dose.taken && styles.checkCircleDone]}>
-                {dose.taken && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
-              </View>
+          {dailyDoses.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="checkmark-done-circle-outline" size={32} color={Colors.primary} />
+              <Text style={styles.emptyCardTitle}>No Doses Scheduled Today</Text>
+              <Text style={styles.emptyCardSub}>
+                All prescribed doses and active medication reminders for today will appear here.
+              </Text>
+            </View>
+          ) : (
+            dailyDoses.map((dose) => (
+              <TouchableOpacity
+                key={dose.id}
+                style={[styles.checklistItem, dose.taken && styles.checklistItemDone]}
+                onPress={() => toggleDose(dose.id)}
+                activeOpacity={0.7}
+              >
+                {/* Checkmark Circle Button */}
+                <View style={[styles.checkCircle, dose.taken && styles.checkCircleDone]}>
+                  {dose.taken && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
+                </View>
 
-              {/* Info Column */}
-              <View style={styles.doseInfo}>
-                <Text style={[styles.doseName, dose.taken && styles.doseNameDone]}>
-                  {dose.name}
-                </Text>
-                <Text style={styles.doseMeta}>
-                  {dose.type} {dose.withFood ? `• ${t('medications.takeWithFood')}` : ''}
-                </Text>
-              </View>
-
-              {/* Time & Badge */}
-              <View style={styles.doseRight}>
-                <Text style={styles.doseTime}>{dose.time}</Text>
-                <View style={[styles.statusBadge, dose.taken ? styles.badgeTaken : styles.badgePending]}>
-                  <Text style={[styles.statusBadgeText, dose.taken ? styles.badgeTakenText : styles.badgePendingText]}>
-                    {dose.taken ? t('medications.takenStatus') : t('medications.pendingStatus')}
+                {/* Info Column */}
+                <View style={styles.doseInfo}>
+                  <Text style={[styles.doseName, dose.taken && styles.doseNameDone]}>
+                    {dose.name}
+                  </Text>
+                  <Text style={styles.doseMeta}>
+                    {dose.type} {dose.withFood ? `• ${t('medications.takeWithFood')}` : ''}
                   </Text>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+
+                {/* Time & Badge */}
+                <View style={styles.doseRight}>
+                  <Text style={styles.doseTime}>{dose.time}</Text>
+                  <View style={[styles.statusBadge, dose.taken ? styles.badgeTaken : styles.badgePending]}>
+                    <Text style={[styles.statusBadgeText, dose.taken ? styles.badgeTakenText : styles.badgePendingText]}>
+                      {dose.taken ? t('medications.takenStatus') : t('medications.pendingStatus')}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )))}
         </View>
 
         {/* Section 2: All Prescriptions & Inventory */}

@@ -40,7 +40,7 @@ export class ExerciseService {
   /**
    * Get exercise database
    */
-  private static getExerciseDatabase(): Exercise[] {
+  static getExerciseDatabase(): Exercise[] {
     return [
       {
         id: 'walking',
@@ -48,12 +48,21 @@ export class ExerciseService {
         category: 'cardio',
         intensity: 'moderate',
         duration: 30,
-        description: 'Brisk walking at a comfortable pace',
+        caloriesBurned: 130,
+        description: 'Brisk walking at a comfortable pace to maintain cardiovascular fitness',
         instructions: [
           'Start with 5-10 minutes',
           'Gradually increase to 30 minutes',
           'Maintain comfortable pace',
           'Wear supportive shoes',
+        ],
+        todos: [
+          'Pre-walk vitals check & hydrate with 1 cup of water',
+          '5-minute warm-up: slow shoulder rolls & ankle rotations',
+          '20-minute brisk walk at steady conversational pace',
+          'Mid-point posture check: relax shoulders and breathe evenly',
+          '5-minute cool-down walk followed by gentle calf stretches',
+          'Post-exercise resting pulse & blood pressure check',
         ],
         suitableConditions: ['hypertension', 'diabetes', 'heart_failure', 'copd'],
         precautions: ['Stop if you feel dizzy or short of breath'],
@@ -64,11 +73,20 @@ export class ExerciseService {
         category: 'cardio',
         intensity: 'moderate',
         duration: 30,
-        description: 'Low-impact full-body exercise',
+        caloriesBurned: 180,
+        description: 'Low-impact full-body exercise gentle on joints and heart',
         instructions: [
           'Start with 15-20 minutes',
           'Use proper breathing technique',
           'Stay within comfort zone',
+        ],
+        todos: [
+          'Pre-swim hydration & gentle joint mobilization on pool deck',
+          '5-minute warm-up: gentle flutter kicks & water walking',
+          '15-minute steady lap swimming or gentle water aerobics',
+          'Rhythmic breathing synchronization across strokes',
+          '5-minute floating cool-down & gentle wall stretches',
+          'Hydration & monitor energy levels post-swim',
         ],
         suitableConditions: ['hypertension', 'diabetes', 'heart_failure', 'copd'],
         precautions: ['Avoid if you have open wounds', 'Supervision recommended for heart patients'],
@@ -79,11 +97,20 @@ export class ExerciseService {
         category: 'cardio',
         intensity: 'moderate',
         duration: 30,
-        description: 'Stationary or outdoor cycling',
+        caloriesBurned: 160,
+        description: 'Stationary or outdoor cycling to strengthen legs and lower blood pressure',
         instructions: [
           'Adjust seat height properly',
           'Start with low resistance',
           'Gradually increase duration',
+        ],
+        todos: [
+          'Set stationary bike seat height to hip level',
+          '5-minute low-resistance pedal warm-up',
+          '15-minute steady moderate cadence (50-60 RPM)',
+          'Keep grip loose on handlebars & upright posture',
+          '5-minute zero-resistance cool-down cycle',
+          'Post-ride quad & hamstring stretches',
         ],
         suitableConditions: ['hypertension', 'diabetes'],
         precautions: ['Avoid if you have balance issues', 'Heart patients should avoid high resistance'],
@@ -94,12 +121,21 @@ export class ExerciseService {
         category: 'strength',
         intensity: 'low',
         duration: 20,
-        description: 'Resistance exercises with light weights or bands',
+        caloriesBurned: 110,
+        description: 'Resistance exercises with light weights or bands for muscle tone and insulin sensitivity',
         instructions: [
           'Start with no weights or very light weights',
           'Focus on proper form',
           'Breathe regularly',
           'Rest between sets',
+        ],
+        todos: [
+          'Light upper-body warm-up (arm circles, torso twists)',
+          'Set 1: Seated resistance band rows (10 reps, slow release)',
+          '60-second rest break & hydration sip',
+          'Set 2: Chair sit-to-stands or wall push-ups (8-10 reps)',
+          'Set 3: Seated bicep curls with light resistance (10 reps)',
+          'Cool-down breathing & gentle chest/arm stretches',
         ],
         suitableConditions: ['diabetes', 'hypertension'],
         precautions: ['Avoid holding breath', 'Heart patients should consult doctor first'],
@@ -110,12 +146,21 @@ export class ExerciseService {
         category: 'flexibility',
         intensity: 'low',
         duration: 30,
-        description: 'Stretching and breathing exercises',
+        caloriesBurned: 90,
+        description: 'Stretching and breathing exercises to reduce stress and arterial stiffness',
         instructions: [
           'Start with basic poses',
           'Focus on breathing',
           'Move slowly',
           'Listen to your body',
+        ],
+        todos: [
+          'Set yoga mat, comfortable clothes & centering breath',
+          '3-minute Cat-Cow gentle spine mobilization',
+          'Gentle Warrior I & mountain pose balance practice',
+          'Seated side body reaches & gentle spinal twists',
+          '5-minute resting Savasana with conscious relaxation',
+          'Notice calm respiration & lowered tension',
         ],
         suitableConditions: ['hypertension', 'diabetes', 'copd'],
         precautions: ['Avoid inverted poses with hypertension', 'Stop if you feel dizzy'],
@@ -126,17 +171,32 @@ export class ExerciseService {
         category: 'flexibility',
         intensity: 'low',
         duration: 10,
-        description: 'Controlled breathing techniques',
+        caloriesBurned: 35,
+        description: 'Controlled breathing techniques to calm sympathetic nervous system and improve lung capacity',
         instructions: [
           'Sit comfortably',
           'Breathe in slowly through nose',
           'Breathe out slowly through mouth',
           'Repeat for 5-10 minutes',
         ],
+        todos: [
+          'Find an upright, supported chair with relaxed shoulders',
+          '5 cycles of Pursed-Lip Breathing (inhale 2s, exhale 4s)',
+          'Diaphragmatic belly expansion check with hands on abdomen',
+          '3 minutes of rhythmic paced respiratory calm',
+          'Take note of reduced shortness of breath & heart rate',
+        ],
         suitableConditions: ['copd', 'asthma', 'hypertension', 'heart_failure'],
         precautions: ['Stop if you feel lightheaded'],
       },
     ];
+  }
+
+  /**
+   * Get exercise by ID
+   */
+  static getExerciseById(id: string): Exercise | undefined {
+    return this.getExerciseDatabase().find((ex) => ex.id === id);
   }
 
   /**
