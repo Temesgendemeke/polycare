@@ -10,11 +10,41 @@ export const formatDate = (date: string | Date): string => {
 };
 
 export const formatTime = (time: string): string => {
-  const [hours, minutes] = time.split(':');
-  const hour = parseInt(hours, 10);
+  if (!time) return '';
+  const trimmed = time.trim();
+  if (/\b(AM|PM)\b/i.test(trimmed)) return trimmed;
+
+  const [hoursPart, minutesPart] = trimmed.split(':');
+  const hour = parseInt(hoursPart, 10);
+  if (isNaN(hour)) return trimmed;
+
+  const minutes = (minutesPart ?? '0').padStart(2, '0').slice(0, 2);
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const formattedHour = hour % 12 || 12;
   return `${formattedHour}:${minutes} ${ampm}`;
+};
+
+// Accepts "8:00 AM", "6:00 PM", "08:00", "18:00". Returns "HH:MM" (24h) or null.
+export const parseTimeTo24 = (input?: string): string | null => {
+  if (!input) return null;
+  const match = input.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3] ? match[3].toUpperCase() : undefined;
+
+  if (isNaN(hours) || isNaN(minutes) || minutes > 59) return null;
+
+  if (period) {
+    if (hours < 1 || hours > 12) return null;
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+  } else if (hours > 23) {
+    return null;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
 export const formatDateTime = (dateString: string): string => {

@@ -9,6 +9,26 @@ export interface SampleMedication extends Medication {
   withFood?: boolean;
 }
 
+export const MEDICATION_IMAGES: Record<string, any> = {
+  'sample-metformin': require('../assets/medications/metformin.jpg'),
+  'sample-lisinopril': require('../assets/medications/lisinopril.jpg'),
+  'sample-atorvastatin': require('../assets/medications/atorvastatin.jpg'),
+  'sample-amlodipine': require('../assets/medications/amlodipine.jpg'),
+  'sample-aspirin': require('../assets/medications/aspirin.jpg'),
+};
+
+export const getMedicationImage = (idOrName?: string): any | null => {
+  if (!idOrName) return null;
+  const key = idOrName.toLowerCase().trim();
+  if (MEDICATION_IMAGES[key]) return MEDICATION_IMAGES[key];
+  if (key.includes('metformin') || key.includes('glucophage')) return MEDICATION_IMAGES['sample-metformin'];
+  if (key.includes('lisinopril')) return MEDICATION_IMAGES['sample-lisinopril'];
+  if (key.includes('atorvastatin') || key.includes('lipitor')) return MEDICATION_IMAGES['sample-atorvastatin'];
+  if (key.includes('amlodipine') || key.includes('norvasc')) return MEDICATION_IMAGES['sample-amlodipine'];
+  if (key.includes('aspirin')) return MEDICATION_IMAGES['sample-aspirin'];
+  return null;
+};
+
 export const SAMPLE_MEDICATIONS: SampleMedication[] = [
   {
     id: 'sample-metformin',
@@ -24,6 +44,7 @@ export const SAMPLE_MEDICATIONS: SampleMedication[] = [
     scheduledDoses: 60,
     takenDoses: 55,
     withFood: true,
+    imageUrl: MEDICATION_IMAGES['sample-metformin'],
   },
   {
     id: 'sample-lisinopril',
@@ -38,6 +59,7 @@ export const SAMPLE_MEDICATIONS: SampleMedication[] = [
     prescribedBy: 'Dr. Alemu',
     scheduledDoses: 30,
     takenDoses: 28,
+    imageUrl: MEDICATION_IMAGES['sample-lisinopril'],
   },
   {
     id: 'sample-atorvastatin',
@@ -52,6 +74,7 @@ export const SAMPLE_MEDICATIONS: SampleMedication[] = [
     prescribedBy: 'Dr. Selam',
     scheduledDoses: 30,
     takenDoses: 24,
+    imageUrl: MEDICATION_IMAGES['sample-atorvastatin'],
   },
   {
     id: 'sample-amlodipine',
@@ -66,6 +89,7 @@ export const SAMPLE_MEDICATIONS: SampleMedication[] = [
     prescribedBy: 'Dr. Selam',
     scheduledDoses: 30,
     takenDoses: 30,
+    imageUrl: MEDICATION_IMAGES['sample-amlodipine'],
   },
   {
     id: 'sample-aspirin',
@@ -80,6 +104,7 @@ export const SAMPLE_MEDICATIONS: SampleMedication[] = [
     prescribedBy: 'Dr. Alemu',
     scheduledDoses: 30,
     takenDoses: 21,
+    imageUrl: MEDICATION_IMAGES['sample-aspirin'],
   },
 ];
 
@@ -126,6 +151,7 @@ export interface PrescribedDoseConfig {
   dosage: string;
   instructions?: string;
   withFood?: boolean;
+  imageUrl?: any;
 }
 
 export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
@@ -136,6 +162,7 @@ export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
     dosage: '500 mg',
     instructions: 'Take with food',
     withFood: true,
+    imageUrl: MEDICATION_IMAGES['sample-metformin'],
   },
   {
     medicationId: 'sample-lisinopril',
@@ -144,6 +171,7 @@ export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
     dosage: '10 mg',
     instructions: 'Take in the morning',
     withFood: false,
+    imageUrl: MEDICATION_IMAGES['sample-lisinopril'],
   },
   {
     medicationId: 'sample-atorvastatin',
@@ -152,6 +180,7 @@ export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
     dosage: '20 mg',
     instructions: 'Take in the evening',
     withFood: false,
+    imageUrl: MEDICATION_IMAGES['sample-atorvastatin'],
   },
   {
     medicationId: 'sample-metformin',
@@ -160,6 +189,7 @@ export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
     dosage: '500 mg',
     instructions: 'Take with food',
     withFood: true,
+    imageUrl: MEDICATION_IMAGES['sample-metformin'],
   },
   {
     medicationId: 'sample-aspirin',
@@ -168,5 +198,6 @@ export const SAMPLE_PRESCRIBED_DOSES: PrescribedDoseConfig[] = [
     dosage: '81 mg',
     instructions: 'Take with water before bed',
     withFood: true,
+    imageUrl: MEDICATION_IMAGES['sample-aspirin'],
   },
 ];

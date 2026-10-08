@@ -1,11 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { Colors } from '../constants/design';
 import { useUserStore, useMedicationStore, useReminderStore } from '../store';
 import { useTranslation } from '../hooks';
 
 import { NotificationService } from '../services';
+
+function AppStatusBar() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Rendered after the initial commit so it wins over expo-router's built-in
+  // <StatusBar style="auto" />, which follows the system dark-mode setting and
+  // otherwise turns the icons white on this app's light background.
+  if (!mounted) return null;
+  return <StatusBar style="dark" />;
+}
 
 export default function RootLayout() {
   const { t } = useTranslation();
@@ -44,6 +59,7 @@ export default function RootLayout() {
 
   return (
     <PaperProvider theme={theme}>
+      <AppStatusBar />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />

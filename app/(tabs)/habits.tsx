@@ -11,12 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 import { useTranslation } from '../../hooks';
-import { useUserStore } from '../../store';
+import { useUserStore, useReminderStore } from '../../store';
+import { formatTime, parseTimeTo24 } from '../../lib/utils/formatDate';
 import { ExerciseService } from '../../services/exerciseService';
 import { DietService } from '../../services/dietService';
 import { Exercise, NCDType } from '../../types';
 import ExerciseSessionModal from '../../components/ExerciseSessionModal';
 import AddHabitModal from '../../components/AddHabitModal';
+import EditActivityTimeModal from '../../components/EditActivityTimeModal';
 
 export interface DailyActivityItem {
   id: string;
@@ -115,6 +117,46 @@ export default function HabitsScreen() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [dietExpanded, setDietExpanded] = useState(true);
+  const [timeEditItem, setTimeEditItem] = useState<DailyActivityItem | null>(null);
+
+  // Health & Activity reminders (local-only, seeded into the reminder store)
+  const { reminders, ensureExerciseReminders, updateReminder, addReminder } = useReminderStore();
+
+  useEffect(() => {
+    ensureExerciseReminders(
+      activities.map((a) => ({
+        id: a.id,
+        name: a.name,
+        time: a.time && a.time !== 'Flexible' ? a.time : '8:00 AM',
+      }))
+    );
+  }, [activities, ensureExerciseReminders]);
+
+  const reminderFor = (activityId: string) =>
+    reminders.find((r) => r.id === `activity-${activityId}`);
+
+  const handleSaveActivityTime = async (item: DailyActivityItem, time24: string) => {
+    const id = `activity-${item.id}`;
+    const existing = reminders.find((r) => r.id === id);
+    if (existing) {
+      await updateReminder(id, { time: time24 }, item.name);
+    } else {
+      await addReminder(
+        {
+          id,
+          medicationId: 'exercise',
+          title: item.name,
+          time: time24,
+          days: [0, 1, 2, 3, 4, 5, 6],
+          enabled: true,
+        },
+        item.name
+      );
+    }
+    setActivities((prev) =>
+      prev.map((a) => (a.id === item.id ? { ...a, time: formatTime(time24) } : a))
+    );
+  };
 
   // Clinical Exercise Database & Recommendations
   const allExercises = useMemo(() => ExerciseService.getExerciseDatabase(), []);
@@ -195,7 +237,7 @@ export default function HabitsScreen() {
       category: data.category,
       type: data.description,
       duration: data.duration,
-      time: 'Flexible',
+      time: '8:00 AM',
       streak: 1,
       completed: false,
     };
@@ -379,6 +421,30 @@ export default function HabitsScreen() {
                       <Text style={styles.doseMeta}>
                         {item.type} {item.duration ? `• ${item.duration} min` : ''}
                       </Text>
+                      {!item.completed &&
+                        (() => {
+                          const reminder = reminderFor(item.id);
+                          const timeLabel = reminder
+                            ? formatTime(reminder.time)
+                            : item.time && item.time !== 'Flexible'
+                            ? item.time
+                            : '8:00 AM';
+                          return (
+                            <TouchableOpacity
+                              style={styles.reminderTimeChip}
+                              onPress={() => setTimeEditItem(item)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons
+                                name={reminder && !reminder.enabled ? 'notifications-off-outline' : 'alarm-outline'}
+                                size={12}
+                                color={Colors.primary}
+                              />
+                              <Text style={styles.reminderTimeChipText}>{timeLabel}</Text>
+                              <Ionicons name="chevron-forward" size={12} color={Colors.textLight} />
+                            </TouchableOpacity>
+                          );
+                        })()}
                     </View>
 
                     {/* Status Badge */}
@@ -656,6 +722,21 @@ export default function HabitsScreen() {
         onClose={() => setAddModalVisible(false)}
         onAdd={handleAddCustomActivity}
       />
+
+      {/* Edit Exercise Reminder Time Modal */}
+      <EditActivityTimeModal
+        visible={!!timeEditItem}
+        onClose={() => setTimeEditItem(null)}
+        activityName={timeEditItem?.name || ''}
+        currentTime={
+          timeEditItem
+            ? reminderFor(timeEditItem.id)?.time ??
+              parseTimeTo24(timeEditItem.time) ??
+              '08:00'
+            : undefined
+        }
+        onSave={(time24) => timeEditItem && handleSaveActivityTime(timeEditItem, time24)}
+      />
     </SafeAreaView>
   );
 }
@@ -930,6 +1011,24 @@ const styles = StyleSheet.create({
     ...Typography.fontSize.xs,
     color: Colors.textSecondary,
     marginTop: 3,
+  },
+  reminderTimeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    marginTop: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.infoLight,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  reminderTimeChipText: {
+    ...Typography.fontSize.xs,
+    ...Typography.fontWeight.semibold,
+    color: Colors.primary,
   },
   doseRight: {
     alignItems: 'flex-end',

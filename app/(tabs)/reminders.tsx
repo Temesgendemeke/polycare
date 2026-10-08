@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../consta
 import { useReminderStore, useMedicationStore } from '../../store';
 import { isToday } from '../../store/reminderStore';
 import { syncReminderToSlot } from '../../lib/doseSync';
+import { getMedicationImage } from '../../constants/sampleMedications';
 import { Reminder } from '../../types';
 
 export const formatTime12Hour = (timeStr?: string): string => {
@@ -144,14 +146,18 @@ export default function RemindersScreen() {
     return list;
   }, [medications, prescribedMeds]);
 
-  const sortedReminders = useMemo(
-    () =>
-      [...reminders].sort((a, b) => {
-        if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
-        return a.time.localeCompare(b.time);
-      }),
-    [reminders]
-  );
+  const sortedReminders = useMemo(() => {
+    const seen = new Set<string>();
+    const unique = reminders.filter((r) => {
+      if (!r || !r.id || seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+    return unique.sort((a, b) => {
+      if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+      return a.time.localeCompare(b.time);
+    });
+  }, [reminders]);
 
   const medName = (medicationId: string) =>
     allMeds.find((m) => m.id === medicationId)?.name || medicationId;
@@ -311,71 +317,84 @@ export default function RemindersScreen() {
       ) : (
         <FlatList
           data={sortedReminders}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={[styles.reminderCard, !item.enabled && styles.reminderCardDisabled]}>
-              <View style={styles.reminderLeft}>
-                <TouchableOpacity
-                  onPress={() => toggleReminder(item.id, item.title || medName(item.medicationId))}
-                  style={styles.iconCircle}
-                >
-                  <Ionicons
-                    name={item.enabled ? 'notifications' : 'notifications-off-outline'}
-                    size={20}
-                    color={item.enabled ? Colors.primary : Colors.textLight}
-                  />
-                </TouchableOpacity>
-
-                <View style={styles.reminderInfo}>
-                  <View style={styles.titleRow}>
-                    <Text style={[styles.reminderTitle, !item.enabled && styles.textMuted]}>
-                      {item.title || medName(item.medicationId)}
-                    </Text>
-                    {item.dosage && <Text style={styles.dosePill}>{item.dosage}</Text>}
-                  </View>
-
-                  <View style={styles.timeRow}>
-                    <Ionicons name="time" size={14} color={Colors.primary} />
-                    <Text style={styles.reminderTimeText}>{item.time}</Text>
-                    <Text style={styles.daysText}>
-                      • {item.days.length === 7
-                        ? t('reminders.everyday')
-                        : item.days.length === 0
-                        ? t('reminders.everyday')
-                        : item.days.sort().map((d) => DAY_NAMES[d]).join(', ')}
-                    </Text>
-                  </View>
-
-                  {isToday(item.lastTaken) && (
-                    <Text style={styles.lastTaken}>
-                      ✓ {t('reminders.takenToday')} ({new Date(item.lastTaken!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                    </Text>
+          renderItem={({ item }) => {
+            const medImg = item.imageUrl || getMedicationImage(item.medicationId) || getMedicationImage(item.title);
+            return (
+              <View style={[styles.reminderCard, !item.enabled && styles.reminderCardDisabled]}>
+                <View style={styles.reminderLeft}>
+                  {medImg ? (
+                    <Image
+                      source={typeof medImg === 'string' ? { uri: medImg } : medImg}
+                      style={styles.medThumb}
+                    />
+                  ) : (
+                    <View style={styles.medThumbPlaceholder}>
+                      <Ionicons name="medical" size={22} color={Colors.primary} />
+                    </View>
                   )}
-                </View>
-              </View>
 
-              <View style={styles.reminderActions}>
-                {item.enabled && (
+                  <View style={styles.reminderInfo}>
+                    <View style={styles.titleRow}>
+                      <Text style={[styles.reminderTitle, !item.enabled && styles.textMuted]}>
+                        {item.title || medName(item.medicationId)}
+                      </Text>
+                      {item.dosage && <Text style={styles.dosePill}>{item.dosage}</Text>}
+                    </View>
+
+                    <View style={styles.timeRow}>
+                      <Ionicons name="time" size={14} color={Colors.primary} />
+                      <Text style={styles.reminderTimeText}>{formatTime12Hour(item.time)}</Text>
+                      <Text style={styles.daysText}>
+                        • {item.days.length === 7
+                          ? t('reminders.everyday')
+                          : item.days.length === 0
+                          ? t('reminders.everyday')
+                          : item.days.sort().map((d) => DAY_NAMES[d]).join(', ')}
+                      </Text>
+                    </View>
+
+                    {isToday(item.lastTaken) && (
+                      <Text style={styles.lastTaken}>
+                        ✓ {t('reminders.takenToday')} ({new Date(item.lastTaken!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.reminderActions}>
                   <TouchableOpacity
-                    style={styles.takenButton}
-                    onPress={async () => {
-                      const wasTaken = isToday(item.lastTaken);
-                      await toggleTaken(item.id);
-                      syncReminderToSlot(item);
-                      if (!wasTaken) {
-                        Alert.alert(t('reminders.recorded'), t('reminders.markedTaken', { name: item.title || medName(item.medicationId) }));
-                      }
-                    }}
+                    onPress={() => toggleReminder(item.id, item.title || medName(item.medicationId))}
+                    style={styles.iconCircle}
                   >
                     <Ionicons
-                      name={isToday(item.lastTaken) ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                      size={26}
-                      color={isToday(item.lastTaken) ? Colors.success : Colors.textLight}
+                      name={item.enabled ? 'notifications' : 'notifications-off-outline'}
+                      size={18}
+                      color={item.enabled ? Colors.primary : Colors.textLight}
                     />
                   </TouchableOpacity>
-                )}
+
+                  {item.enabled && (
+                    <TouchableOpacity
+                      style={styles.takenButton}
+                      onPress={async () => {
+                        const wasTaken = isToday(item.lastTaken);
+                        await toggleTaken(item.id);
+                        syncReminderToSlot(item);
+                        if (!wasTaken) {
+                          Alert.alert(t('reminders.recorded'), t('reminders.markedTaken', { name: item.title || medName(item.medicationId) }));
+                        }
+                      }}
+                    >
+                      <Ionicons
+                        name={isToday(item.lastTaken) ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                        size={26}
+                        color={isToday(item.lastTaken) ? Colors.success : Colors.textLight}
+                      />
+                    </TouchableOpacity>
+                  )}
 
                 <TouchableOpacity
                   style={styles.actionIcon}
@@ -401,7 +420,8 @@ export default function RemindersScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          )}
+            );
+          }}
         />
       )}
 
@@ -460,14 +480,30 @@ export default function RemindersScreen() {
             {/* Time Configuration */}
             <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>{t('reminders.reminderTime')}</Text>
             <View style={styles.timeInputRow}>
-              <TextInput
-                style={[styles.input, styles.timeInput]}
-                value={timeStr}
-                onChangeText={setTimeStr}
-                placeholder="08:00"
-                keyboardType="numbers-and-punctuation"
-                placeholderTextColor={Colors.textLight}
-              />
+              <View style={styles.timeEntryRow}>
+                <TextInput
+                  style={[styles.input, styles.timeInput]}
+                  value={timeStr}
+                  onChangeText={setTimeStr}
+                  placeholder="8:00"
+                  keyboardType="numbers-and-punctuation"
+                  placeholderTextColor={Colors.textLight}
+                />
+                <View style={styles.ampmToggle}>
+                  {(['AM', 'PM'] as const).map((period) => (
+                    <TouchableOpacity
+                      key={period}
+                      style={[styles.ampmChip, ampm === period && styles.ampmChipActive]}
+                      onPress={() => setAmpm(period)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.ampmChipText, ampm === period && styles.ampmChipTextActive]}>
+                        {period}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
               <View style={styles.presetRow}>
                 {PRESET_TIMES.map((preset) => (
                   <TouchableOpacity
@@ -605,11 +641,29 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   reminderCardDisabled: { opacity: 0.55 },
-  reminderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
+  reminderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
+  medThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  medThumbPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.infoLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: Colors.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
@@ -685,7 +739,20 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   timeInputRow: { gap: 8 },
+  timeEntryRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timeInput: { width: 120, textAlign: 'center', ...Typography.fontSize.xl, ...Typography.fontWeight.bold },
+  ampmToggle: { flexDirection: 'row', gap: 4 },
+  ampmChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  ampmChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  ampmChipText: { ...Typography.fontSize.sm, ...Typography.fontWeight.semibold, color: Colors.textSecondary },
+  ampmChipTextActive: { color: Colors.textOnPrimary },
   presetRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   presetChip: {
     paddingHorizontal: Spacing.sm,

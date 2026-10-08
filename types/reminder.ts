@@ -10,4 +10,5 @@ export interface Reminder {
   lastTaken?: string;
   snoozedUntil?: string;
   notificationIds?: string[];
+  imageUrl?: string | any;
 }

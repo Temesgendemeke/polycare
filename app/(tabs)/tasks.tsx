@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from '../../hooks';
 import { BorderRadius, Colors, Shadows, Spacing, Typography } from '../../constants/design';
 import { useMedicationStore, useReminderStore } from '../../store';
+import { isActivityReminder } from '../../store/reminderStore';
+import { formatTime } from '../../lib/utils/formatDate';
 
 type TaskStatus = 'pending' | 'completed';
 type Task = {
@@ -44,12 +46,12 @@ function generateTasks(
   }
 
   for (const reminder of reminders) {
-    if (reminder.enabled) {
+    if (reminder.enabled && !isActivityReminder(reminder.id)) {
       const today = new Date().getDay();
       if (reminder.days.length === 0 || reminder.days.includes(today)) {
         tasks.push({
           id: `reminder-${reminder.id}`,
-          title: t('tasks.takeAt', { name: reminder.title || t('tasks.medicationFallback'), time: reminder.time }),
+          title: t('tasks.takeAt', { name: reminder.title || t('tasks.medicationFallback'), time: formatTime(reminder.time) }),
           category: t('tasks.catHealth'),
           priority: 'high',
           status: 'pending',

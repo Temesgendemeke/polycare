@@ -1,8 +1,9 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { Reminder } from '../types';
+import { formatTime } from '../lib/utils/formatDate';
 
-// Configure global notification handler
+// Configure global notification handler for when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -15,6 +16,7 @@ export const NOTIFICATION_CHANNEL_ID = 'medication-reminders';
 
 export class NotificationService {
   private static isInitialized = false;
+  private static webTimers = new Map<string, any>();
 
   /**
    * Initialize notification channels and configure handlers
@@ -45,6 +47,19 @@ export class NotificationService {
    */
   static async requestPermissions(): Promise<boolean> {
     try {
+      // Browser Web Environment
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          if (Notification.permission === 'granted') {
+            return true;
+          }
+          const perm = await Notification.requestPermission();
+          return perm === 'granted';
+        }
+        return true;
+      }
+
+      // Mobile Environment (Android & iOS)
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
@@ -71,7 +86,7 @@ export class NotificationService {
   }
 
   /**
-   * Schedule recurring notifications for a given reminder
+   * Schedule recurring and immediate next-occurrence notifications for a reminder
    */
   static async scheduleReminder(
     reminder: Reminder,
@@ -84,12 +99,11 @@ export class NotificationService {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
       console.warn('Notification permissions not granted; reminder saved locally.');
-      return [];
     }
 
     // Cancel any previous notifications for this reminder
     if (reminder.notificationIds && reminder.notificationIds.length > 0) {
-      await this.cancelReminder(reminder.notificationIds);
+      await this.cancelReminder(reminder.notificationIds, reminder.id);
     }
 
     const [hourStr, minStr] = reminder.time.split(':');
@@ -102,9 +116,15 @@ export class NotificationService {
     }
 
     const medTitle = medicationName || reminder.title || 'Medication';
+    const isActivity = reminder.id.startsWith('activity-');
+    const contentTitle = isActivity ? `🏃 Time for ${medTitle}` : `💊 Time for ${medTitle}`;
+    const contentBody = isActivity
+      ? `It's ${formatTime(reminder.time)}. Time for your health exercise — ${medTitle}!`
+      : `It's ${formatTime(reminder.time)}. Take your dose${reminder.dosage ? ` (${reminder.dosage})` : ''} on schedule.`;
+
     const content: Notifications.NotificationContentInput = {
-      title: `💊 Time for ${medTitle}`,
-      body: `It's ${reminder.time}. Take your dose${reminder.dosage ? ` (${reminder.dosage})` : ''} on schedule.`,
+      title: contentTitle,
+      body: contentBody,
       sound: true,
       priority: Notifications.AndroidNotificationPriority.MAX,
       data: {
@@ -117,39 +137,86 @@ export class NotificationService {
       (content as any).channelId = NOTIFICATION_CHANNEL_ID;
     }
 
+    // Calculate exact delay in seconds for upcoming occurrence (especially for testing 1 minute from now)
+    const now = new Date();
+    const nextDate = new Date();
+    nextDate.setHours(hour, minute, 0, 0);
+
+    let delaySeconds = Math.round((nextDate.getTime() - now.getTime()) / 1000);
+    if (delaySeconds <= 0) {
+      // Time already passed today, so the next occurrence is tomorrow
+      nextDate.setDate(nextDate.getDate() + 1);
+      delaySeconds = Math.round((nextDate.getTime() - now.getTime()) / 1000);
+    }
+
     const scheduledIds: string[] = [];
 
-    try {
-      // If no specific days or all 7 days selected, schedule daily
-      if (!reminder.days || reminder.days.length === 0 || reminder.days.length === 7) {
-        const id = await Notifications.scheduleNotificationAsync({
-          content,
-          trigger: {
-            hour,
-            minute,
-            repeats: true,
-          },
-        });
-        scheduledIds.push(id);
-      } else {
-        // Specific days: 0 = Sun, 1 = Mon ... 6 = Sat
-        // expo-notifications uses 1 for Sunday, ..., 7 for Saturday
-        for (const day of reminder.days) {
-          const weekday = day + 1;
+    // 1. Web Browser fallback: use client-side timer + Web Notification API
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (delaySeconds > 0 && delaySeconds <= 86400) {
+        const timerId = setTimeout(() => {
+          try {
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification(contentTitle, {
+                body: contentBody,
+                icon: '/favicon.ico',
+              });
+            } else {
+              alert(`${contentTitle}\n\n${contentBody}`);
+            }
+          } catch {
+            alert(`${contentTitle}\n\n${contentBody}`);
+          }
+        }, delaySeconds * 1000);
+
+        this.webTimers.set(reminder.id, timerId);
+        scheduledIds.push(`web-${reminder.id}-${Date.now()}`);
+      }
+    }
+
+    // 2. Mobile (Android/iOS) scheduling via expo-notifications
+    if (Platform.OS !== 'web') {
+      try {
+        // Schedule exact upcoming occurrence (guarantees immediate 1-minute reminders fire without being delayed by battery batching)
+        if (delaySeconds > 0 && delaySeconds <= 86400) {
+          const exactId = await Notifications.scheduleNotificationAsync({
+            content,
+            trigger: {
+              seconds: Math.max(1, delaySeconds),
+            },
+          });
+          scheduledIds.push(exactId);
+        }
+
+        // Also schedule daily or weekly recurring schedule for subsequent days
+        if (!reminder.days || reminder.days.length === 0 || reminder.days.length === 7) {
           const id = await Notifications.scheduleNotificationAsync({
             content,
             trigger: {
-              weekday,
               hour,
               minute,
               repeats: true,
             },
           });
           scheduledIds.push(id);
+        } else {
+          for (const day of reminder.days) {
+            const weekday = day + 1;
+            const id = await Notifications.scheduleNotificationAsync({
+              content,
+              trigger: {
+                weekday,
+                hour,
+                minute,
+                repeats: true,
+              },
+            });
+            scheduledIds.push(id);
+          }
         }
+      } catch (error) {
+        console.error('Error scheduling reminder notification:', error);
       }
-    } catch (error) {
-      console.error('Error scheduling reminder notification:', error);
     }
 
     return scheduledIds;
@@ -158,13 +225,22 @@ export class NotificationService {
   /**
    * Cancel notifications by array of IDs
    */
-  static async cancelReminder(notificationIds?: string[]): Promise<void> {
+  static async cancelReminder(notificationIds?: string[], reminderId?: string): Promise<void> {
+    if (reminderId && this.webTimers.has(reminderId)) {
+      clearTimeout(this.webTimers.get(reminderId));
+      this.webTimers.delete(reminderId);
+    }
+
     if (!notificationIds || notificationIds.length === 0) return;
+
     for (const id of notificationIds) {
+      if (id.startsWith('web-')) {
+        continue;
+      }
       try {
         await Notifications.cancelScheduledNotificationAsync(id);
       } catch (e) {
-        // notification might already have fired or been deleted
+        // Notification might already have fired or been deleted
       }
     }
   }
@@ -177,6 +253,23 @@ export class NotificationService {
     body = 'PolyCare notifications are working perfectly!'
   ): Promise<string | null> {
     const hasPermission = await this.requestPermissions();
+
+    // Web test notification
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      setTimeout(() => {
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { body, icon: '/favicon.ico' });
+          } else {
+            alert(`${title}\n\n${body}`);
+          }
+        } catch {
+          alert(`${title}\n\n${body}`);
+        }
+      }, 2000);
+      return 'web-test-id';
+    }
+
     if (!hasPermission) return null;
 
     try {
@@ -206,6 +299,9 @@ export class NotificationService {
    * Cancel all scheduled notifications across the entire app
    */
   static async cancelAll(): Promise<void> {
+    this.webTimers.forEach((timer) => clearTimeout(timer));
+    this.webTimers.clear();
+
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
     } catch (e) {

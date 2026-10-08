@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMedicationStore, useUserStore, useReminderStore } from '../../store';
-import { isToday } from '../../store/reminderStore';
+import { isToday, isActivityReminder } from '../../store/reminderStore';
 import { useTranslation } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 
@@ -21,7 +21,10 @@ export default function HomeScreen() {
 
   const todayDay = new Date().getDay();
   const todaysReminders = reminders.filter(
-    (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDay))
+    (r) =>
+      r.enabled &&
+      !isActivityReminder(r.id) &&
+      (r.days.length === 0 || r.days.includes(todayDay))
   );
   const totalDoses = todaysReminders.length;
   const takenDoses = todaysReminders.filter((r) => isToday(r.lastTaken)).length;

@@ -43,8 +43,8 @@ export const useNotifications = () => {
     []
   );
 
-  const cancelReminderNotification = useCallback(async (notificationIds?: string[]) => {
-    await NotificationService.cancelReminder(notificationIds);
+  const cancelReminderNotification = useCallback(async (notificationIds?: string[], reminderId?: string) => {
+    await NotificationService.cancelReminder(notificationIds, reminderId);
   }, []);
 
   const sendTestNotification = useCallback(

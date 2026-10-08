@@ -6,17 +6,19 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMedicationStore, useReminderStore } from '../../store';
-import { isToday } from '../../store/reminderStore';
+import { isToday, isActivityReminder } from '../../store/reminderStore';
 import { useTranslation } from '../../hooks';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../../constants/design';
 import { Medication } from '../../types';
 import AddMedicationModal from '../../components/AddMedicationModal';
 import { DDIService } from '../../services/ddiService';
 import InteractionCard from '../../components/InteractionCard';
+import { getMedicationImage } from '../../constants/sampleMedications';
 
 export interface DailyDoseItem {
   id: string;
@@ -25,6 +27,7 @@ export interface DailyDoseItem {
   time: string;
   withFood: boolean;
   taken: boolean;
+  imageUrl?: any;
 }
 
 const formatDoseTime = (timeStr: string): string => {
@@ -63,14 +66,15 @@ export default function MedicationsScreen() {
   // Today's day index (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
   const todayDayIndex = new Date().getDay();
 
-  // Map medications for fast lookup of dosage, food instructions, etc.
+  // Map medications for fast lookup of dosage, food instructions, image, etc.
   const allMedsMap = useMemo(() => {
-    const map = new Map<string, { name: string; dosage?: string; withFood?: boolean }>();
+    const map = new Map<string, { name: string; dosage?: string; withFood?: boolean; imageUrl?: any }>();
     for (const m of [...(prescribedMeds || []), ...(medications || [])]) {
       map.set(m.id, {
         name: m.name,
         dosage: `${m.dosage} ${m.unit}`,
         withFood: (m as any).withFood || m.instructions?.toLowerCase().includes('food') || false,
+        imageUrl: (m as any).imageUrl || getMedicationImage(m.id) || getMedicationImage(m.name),
       });
     }
     return map;
@@ -79,7 +83,10 @@ export default function MedicationsScreen() {
   // Dynamically compute today's doses from reminders scheduled for today
   const dailyDoses: DailyDoseItem[] = useMemo(() => {
     const activeToday = reminders.filter(
-      (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDayIndex))
+      (r) =>
+        r.enabled &&
+        !isActivityReminder(r.id) &&
+        (r.days.length === 0 || r.days.includes(todayDayIndex))
     );
 
     return activeToday
@@ -90,6 +97,7 @@ export default function MedicationsScreen() {
         const type = r.dosage || med?.dosage || 'Scheduled Dose';
         const withFood = med?.withFood || r.instructions?.toLowerCase().includes('food') || false;
         const taken = isToday(r.lastTaken);
+        const imageUrl = r.imageUrl || med?.imageUrl || getMedicationImage(r.medicationId) || getMedicationImage(name);
 
         return {
           id: r.id,
@@ -98,6 +106,7 @@ export default function MedicationsScreen() {
           time: formatDoseTime(r.time),
           withFood,
           taken,
+          imageUrl,
         };
       });
   }, [reminders, todayDayIndex, allMedsMap]);
@@ -114,9 +123,38 @@ export default function MedicationsScreen() {
   // 7-day weekly history array, where 7th bar is today's real-time adherence rate
   const weeklyHistory = [...BASE_WEEKLY_HISTORY, todayAdherencePct];
 
-  const activeMedications = medications.filter((m) => m.status === 'active');
-  const interactions = showInteractions && activeMedications.length >= 2
-    ? DDIService.checkDDI(activeMedications).interactions
+  // Prescriptions list combining doctor-prescribed demo meds and custom added meds
+  const allPrescriptionList = useMemo(() => {
+    const list: (Medication & { isPrescribed?: boolean })[] = [];
+    const seen = new Set<string>();
+
+    for (const p of (prescribedMeds || [])) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        list.push({
+          ...p,
+          isPrescribed: true,
+          imageUrl: (p as any).imageUrl || getMedicationImage(p.id) || getMedicationImage(p.name),
+        });
+      }
+    }
+
+    for (const m of (medications || []).filter((x) => x.status === 'active')) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        list.push({
+          ...m,
+          isPrescribed: false,
+          imageUrl: (m as any).imageUrl || getMedicationImage(m.id) || getMedicationImage(m.name),
+        });
+      }
+    }
+
+    return list;
+  }, [prescribedMeds, medications]);
+
+  const interactions = showInteractions && allPrescriptionList.length >= 2
+    ? DDIService.checkDDI(allPrescriptionList).interactions
     : [];
 
   const handleDelete = (id: string, name: string) => {
@@ -234,6 +272,18 @@ export default function MedicationsScreen() {
                   {dose.taken && <Ionicons name="checkmark" size={18} color="#FFFFFF" />}
                 </View>
 
+                {/* Medication Thumbnail Image */}
+                {dose.imageUrl ? (
+                  <Image
+                    source={typeof dose.imageUrl === 'string' ? { uri: dose.imageUrl } : dose.imageUrl}
+                    style={styles.doseThumb}
+                  />
+                ) : (
+                  <View style={styles.doseThumbPlaceholder}>
+                    <Ionicons name="medical" size={18} color={Colors.primary} />
+                  </View>
+                )}
+
                 {/* Info Column */}
                 <View style={styles.doseInfo}>
                   <Text style={[styles.doseName, dose.taken && styles.doseNameDone]}>
@@ -263,7 +313,7 @@ export default function MedicationsScreen() {
             <Text style={styles.sectionTitle}>{t('medications.allPrescriptions')}</Text>
             <Text style={styles.sectionSubtitle}>Active patient prescriptions & stock</Text>
           </View>
-          {activeMedications.length >= 2 && (
+          {allPrescriptionList.length >= 2 && (
             <TouchableOpacity
               style={styles.ddiBtn}
               onPress={() => setShowInteractions(!showInteractions)}
@@ -299,8 +349,8 @@ export default function MedicationsScreen() {
           </View>
         )}
 
-        {/* Active Prescriptions List */}
-        {activeMedications.length === 0 ? (
+        {/* All Prescriptions List (Prescribed Demo + Custom) */}
+        {allPrescriptionList.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="medkit-outline" size={36} color={Colors.textLight} />
             <Text style={styles.emptyCardTitle}>No additional custom medications</Text>
@@ -309,7 +359,7 @@ export default function MedicationsScreen() {
             </Text>
           </View>
         ) : (
-          activeMedications.map((item) => (
+          allPrescriptionList.map((item) => (
             <TouchableOpacity
               key={item.id}
               activeOpacity={0.7}
@@ -317,18 +367,43 @@ export default function MedicationsScreen() {
               style={styles.prescriptionCard}
             >
               <View style={styles.prescriptionTop}>
+                {/* Medication Thumbnail Image */}
+                {item.imageUrl ? (
+                  <Image
+                    source={typeof item.imageUrl === 'string' ? { uri: item.imageUrl } : item.imageUrl}
+                    style={styles.prescriptionThumb}
+                  />
+                ) : (
+                  <View style={styles.prescriptionThumbPlaceholder}>
+                    <Ionicons name="medical" size={24} color={Colors.primary} />
+                  </View>
+                )}
+
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.prescriptionName}>{item.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <Text style={styles.prescriptionName}>{item.name}</Text>
+                    {item.isPrescribed && (
+                      <View style={styles.rxBadge}>
+                        <Text style={styles.rxBadgeText}>Doctor Prescribed</Text>
+                      </View>
+                    )}
+                  </View>
                   {!!item.genericName && (
                     <Text style={styles.prescriptionGeneric}>{item.genericName}</Text>
                   )}
+                  {!!item.prescribedBy && (
+                    <Text style={styles.prescribedByText}>Prescribed by {item.prescribedBy}</Text>
+                  )}
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleDelete(item.id, item.name)}
-                  style={styles.deleteBtn}
-                >
-                  <Ionicons name="trash-outline" size={17} color={Colors.error} />
-                </TouchableOpacity>
+
+                {!item.isPrescribed && (
+                  <TouchableOpacity
+                    onPress={() => handleDelete(item.id, item.name)}
+                    style={styles.deleteBtn}
+                  >
+                    <Ionicons name="trash-outline" size={17} color={Colors.error} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={styles.prescriptionMetaRow}>
@@ -553,6 +628,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#1D9E75',
     borderColor: '#1D9E75',
   },
+  doseThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  doseThumbPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.infoLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   doseInfo: {
     flex: 1,
   },
@@ -660,19 +753,54 @@ const styles = StyleSheet.create({
   },
   prescriptionTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  prescriptionThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  prescriptionThumbPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.infoLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   prescriptionName: {
     ...Typography.fontSize.sm,
     ...Typography.fontWeight.bold,
     color: Colors.text,
   },
+  rxBadge: {
+    backgroundColor: '#E1F5EE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  rxBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1D9E75',
+  },
   prescriptionGeneric: {
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 1,
+  },
+  prescribedByText: {
+    fontSize: 11,
+    color: Colors.primary,
+    marginTop: 1,
+    fontWeight: '500',
   },
   deleteBtn: {
     padding: 4,

@@ -33,6 +33,7 @@ export interface Medication {
   notes?: string;
   refillDate?: string;
   currentStock?: number;
+  imageUrl?: string | any;
 }
 
 export interface DrugInteraction {

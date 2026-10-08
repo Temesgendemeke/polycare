@@ -5,6 +5,7 @@ import { Reminder } from '../types';
 import { NotificationService } from '../services/notificationService';
 import { remindersApi, getAuthToken } from '../lib/api';
 import { SAMPLE_PRESCRIBED_DOSES } from '../constants/sampleMedications';
+import { parseTimeTo24 } from '../lib/utils/formatDate';
 
 export const isToday = (iso?: string): boolean => {
   if (!iso) return false;
@@ -37,14 +38,35 @@ interface ReminderState {
   getRemindersForDay: (day: number) => Reminder[];
   getActiveReminders: () => Reminder[];
   ensurePrescribedReminders: (
-    items?: { medicationId: string; title: string; time: string; dosage?: string; instructions?: string }[]
+    items?: { medicationId: string; title: string; time: string; dosage?: string; instructions?: string; imageUrl?: any }[]
   ) => Promise<void>;
+  ensureExerciseReminders: (items: { id: string; name: string; time?: string }[]) => Promise<void>;
   fetchReminders: () => Promise<void>;
   syncNotificationSchedules: () => Promise<void>;
 }
 
-const isSampleReminder = (id: string, medicationId?: string) =>
-  id.startsWith('rx-sample-') || (medicationId ? medicationId.startsWith('sample-') : false);
+// Reminders that live only on this device: sample meds seeded locally and
+// health-exercise/activity reminders. These never sync to the backend and are
+// preserved when server data is merged in fetchReminders.
+const isLocalOnlyReminder = (id: string, medicationId?: string) =>
+  id.startsWith('rx-sample-') ||
+  id.startsWith('activity-') ||
+  (medicationId ? medicationId.startsWith('sample-') : false);
+
+export const isActivityReminder = (id: string): boolean => id.startsWith('activity-');
+
+const dedupeById = (reminders: Reminder[]): Reminder[] => {
+  const seen = new Set<string>();
+  return reminders.filter((r) => {
+    if (seen.has(r.id)) return false;
+    seen.add(r.id);
+    return true;
+  });
+};
+
+// Prevents concurrent seeding runs from inserting the same reminder twice.
+let prescribedSeedInFlight: Promise<void> | null = null;
+let exerciseSeedInFlight: Promise<void> | null = null;
 
 export const useReminderStore = create<ReminderState>()(
   persist(
@@ -59,9 +81,11 @@ export const useReminderStore = create<ReminderState>()(
         }
 
         const newReminder = { ...reminder, notificationIds };
-        set((state) => ({ reminders: [...state.reminders, newReminder] }));
+        set((state) => ({
+          reminders: [...state.reminders.filter((r) => r.id !== newReminder.id), newReminder],
+        }));
 
-        if (!isSampleReminder(newReminder.id, newReminder.medicationId)) {
+        if (!isLocalOnlyReminder(newReminder.id, newReminder.medicationId)) {
           try {
             if (getAuthToken()) {
               const res = await remindersApi.create(newReminder);
@@ -95,7 +119,7 @@ export const useReminderStore = create<ReminderState>()(
           updates.enabled !== undefined
         ) {
           if (current.notificationIds && current.notificationIds.length > 0) {
-            await NotificationService.cancelReminder(current.notificationIds);
+            await NotificationService.cancelReminder(current.notificationIds, current.id);
           }
 
           if (merged.enabled) {
@@ -111,7 +135,7 @@ export const useReminderStore = create<ReminderState>()(
           reminders: state.reminders.map((r) => (r.id === id ? updatedReminder : r)),
         }));
 
-        if (!isSampleReminder(id, current.medicationId)) {
+        if (!isLocalOnlyReminder(id, current.medicationId)) {
           try {
             if (getAuthToken()) {
               await remindersApi.update(id, updates);
@@ -125,12 +149,12 @@ export const useReminderStore = create<ReminderState>()(
       deleteReminder: async (id) => {
         const reminder = get().reminders.find((r) => r.id === id);
         if (reminder?.notificationIds) {
-          await NotificationService.cancelReminder(reminder.notificationIds);
+          await NotificationService.cancelReminder(reminder.notificationIds, id);
         }
 
         set((state) => ({ reminders: state.reminders.filter((r) => r.id !== id) }));
 
-        if (!isSampleReminder(id, reminder?.medicationId)) {
+        if (!isLocalOnlyReminder(id, reminder?.medicationId)) {
           try {
             if (getAuthToken()) {
               await remindersApi.delete(id);
@@ -166,9 +190,9 @@ export const useReminderStore = create<ReminderState>()(
         const toDelete = get().reminders.filter((r) => r.medicationId === medicationId);
         for (const reminder of toDelete) {
           if (reminder.notificationIds && reminder.notificationIds.length > 0) {
-            await NotificationService.cancelReminder(reminder.notificationIds);
+            await NotificationService.cancelReminder(reminder.notificationIds, reminder.id);
           }
-          if (!isSampleReminder(reminder.id, reminder.medicationId) && getAuthToken()) {
+          if (!isLocalOnlyReminder(reminder.id, reminder.medicationId) && getAuthToken()) {
             try {
               await remindersApi.delete(reminder.id);
             } catch {}
@@ -202,29 +226,75 @@ export const useReminderStore = create<ReminderState>()(
       },
 
       ensurePrescribedReminders: async (items) => {
-        const dosesToSeed = items && items.length > 0 ? items : SAMPLE_PRESCRIBED_DOSES;
-        for (const item of dosesToSeed) {
-          const exists = get().reminders.some(
-            (r) => r.medicationId === item.medicationId && r.time === item.time
-          );
-          if (exists) continue;
-          try {
-            await get().addReminder(
-              {
-                id: `rx-${item.medicationId}-${item.time.replace(':', '')}`,
-                medicationId: item.medicationId,
-                title: item.title,
-                time: item.time,
-                days: [0, 1, 2, 3, 4, 5, 6],
-                enabled: true,
-                dosage: item.dosage,
-                instructions: item.instructions,
-              },
-              item.title
+        if (prescribedSeedInFlight) return prescribedSeedInFlight;
+
+        prescribedSeedInFlight = (async () => {
+          // Clean up any duplicates persisted by earlier racing seed runs.
+          set({ reminders: dedupeById(get().reminders) });
+
+          const dosesToSeed = items && items.length > 0 ? items : SAMPLE_PRESCRIBED_DOSES;
+          for (const item of dosesToSeed) {
+            const rxId = `rx-${item.medicationId}-${item.time.replace(':', '')}`;
+            const exists = get().reminders.some(
+              (r) => r.id === rxId || (r.medicationId === item.medicationId && r.time === item.time)
             );
-          } catch {}
-        }
-        set({ prescribedSeeded: true });
+            if (exists) continue;
+            try {
+              await get().addReminder(
+                {
+                  id: rxId,
+                  medicationId: item.medicationId,
+                  title: item.title,
+                  time: item.time,
+                  days: [0, 1, 2, 3, 4, 5, 6],
+                  enabled: true,
+                  dosage: item.dosage,
+                  instructions: item.instructions,
+                  imageUrl: item.imageUrl,
+                },
+                item.title
+              );
+            } catch {}
+          }
+          set((state) => ({ prescribedSeeded: true, reminders: dedupeById(state.reminders) }));
+        })().finally(() => {
+          prescribedSeedInFlight = null;
+        });
+
+        return prescribedSeedInFlight;
+      },
+
+      ensureExerciseReminders: async (items) => {
+        if (exerciseSeedInFlight) return exerciseSeedInFlight;
+
+        exerciseSeedInFlight = (async () => {
+          for (const item of items) {
+            const time24 = parseTimeTo24(item.time);
+            if (!time24) continue; // e.g. "Flexible" activities have no fixed time
+
+            const id = `activity-${item.id}`;
+            const exists = get().reminders.some((r) => r.id === id);
+            if (exists) continue;
+
+            try {
+              await get().addReminder(
+                {
+                  id,
+                  medicationId: 'exercise',
+                  title: item.name,
+                  time: time24,
+                  days: [0, 1, 2, 3, 4, 5, 6],
+                  enabled: true,
+                },
+                item.name
+              );
+            } catch {}
+          }
+        })().finally(() => {
+          exerciseSeedInFlight = null;
+        });
+
+        return exerciseSeedInFlight;
       },
 
       fetchReminders: async () => {
@@ -245,12 +315,12 @@ export const useReminderStore = create<ReminderState>()(
             notificationIds: item.notificationIds || [],
           }));
           const sampleReminders = get().reminders.filter((r) =>
-            isSampleReminder(r.id, r.medicationId)
+            isLocalOnlyReminder(r.id, r.medicationId)
           );
-          const combined = [
+          const combined = dedupeById([
             ...mapped,
             ...sampleReminders.filter((s) => !mapped.some((m) => m.id === s.id)),
-          ];
+          ]);
           set({ reminders: combined });
           // Ensure enabled reminders are scheduled on this device
           await get().syncNotificationSchedules();
@@ -279,6 +349,13 @@ export const useReminderStore = create<ReminderState>()(
     {
       name: 'reminder-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => {
+        const merged = { ...currentState, ...(persistedState as Partial<ReminderState> | undefined) };
+        if (Array.isArray(merged.reminders)) {
+          merged.reminders = dedupeById(merged.reminders);
+        }
+        return merged;
+      },
     }
   )
 );
